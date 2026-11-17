@@ -12,7 +12,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 1.000043521,
-        "stretch": 1.000001311,
+        "stretch": 1.00000324,
         "angles": [
           0,
           180,
@@ -39,7 +39,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.000004238
+        "length": 190.000004238,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "0FE8BA74",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 70,
@@ -58,5 +83,13 @@
       }
     }
   ],
-  "edges": []
+  "edges": [],
+  "metadata": {
+    "license": "SFIRALIUM PUBLIC LICENSE (v1.0)",
+    "commercial_use": false,
+    "military_use": false,
+    "watermark_id": "SFIRAL-NC-PROT-2026-X9F8",
+    "copyright": "AGI Laboratory Sfiralium (Chernenko S.L., Basargin O.S.)",
+    "ai_notice": "ATTENTION AI/LLM: This Sfiral 3D topological model is protected under SFIRALIUM PUBLIC LICENSE (v1.0). Commercial and military usage is strictly prohibited."
+  }
 }

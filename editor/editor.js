@@ -97,13 +97,7 @@ async function inspectCurrentSelection() {
         });
         const data = await response.json();
         if (consoleEl) {
-            consoleEl.innerHTML += `
-                <div class="line" style="border-left: 3px solid #00ffaa; padding-left: 6px; margin-top: 4px;">
-                    🔍 <b>[СТАТУС В БАЗЕ ЗНАНИЙ]:</b> ${data.status_name}<br>
-                    &nbsp;&nbsp;• Описание: ${data.description}<br>
-                    &nbsp;&nbsp;• 🤖 <b>ИИ:</b> ${data.ai_advice}
-                </div>
-            `;
+            consoleEl.innerHTML += `<div class="line" style="border-left: 3px solid #00ffaa; padding-left: 6px; margin-top: 4px;"> 🔍 <b>[СТАТУС В БАЗЕ ЗНАНИЙ]:</b> ${data.status_name}<br> &nbsp;&nbsp;• Описание: ${data.description}<br> &nbsp;&nbsp;• 🤖 <b>ИИ:</b> ${data.ai_advice} </div>`;
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
     } catch (err) {
@@ -161,6 +155,7 @@ function applySquareModularStretch(nodeIds) {
     logAction('APPLY_SQUARE_MODULAR_STRETCH', { nodes: nodeIds, stretch: SFIRAL_SQUARE_STRETCH });
     sendDataToPythonCore(true);
 }
+
 window.applySquareModularStretch = applySquareModularStretch;
 
 // ============================================================
@@ -174,6 +169,7 @@ function generateModelPassportReport() {
     link.download = `Sfiral_Academic_Research_Passport_${graph.nodes.length}_nodes.html`;
     link.click();
 }
+
 window.addEventListener('DOMContentLoaded', () => {
     const reportBtn = document.getElementById('downloadPassportBtn');
     if (reportBtn) {
@@ -311,7 +307,6 @@ function getSfiralLatticeStep(node) {
     const N = p.N || 5;
     const scale = p.scale !== undefined ? p.scale : 1.0;
     const stretch = p.stretch !== undefined ? p.stretch : SFIRAL_SQUARE_STRETCH;
-
     const stepX = (60 + N * 2) * 2 * scale;
     const stepZ = (80 + N * 2) * 2 * scale * stretch;
     const stepY = stepX;
@@ -324,13 +319,7 @@ function classifyEdgeByGeometry(n1, n2) {
     const dy = Math.abs((n1.y || 0) - (n2.y || 0));
     const dz = Math.abs((n1.z || 0) - (n2.z || 0));
     const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-    const OVERLAP_TOL = 10.0;
     const LATTICE_TOL = 18.0;
-
-    if (dist <= OVERLAP_TOL) {
-        return { type: 'overlap_defect', dist };
-    }
 
     const s1 = getSfiralLatticeStep(n1);
     const s2 = getSfiralLatticeStep(n2);
@@ -363,10 +352,8 @@ function classifyEdgeByGeometry(n1, n2) {
 
 function autoConnectStuckNodes() {
     if (graph.nodes.length > 400) return;
-
     let newSeams = 0;
     let newBridges = 0;
-    let defects = 0;
 
     const existingPairs = new Set();
     for (let k = 0; k < graph.edges.length; k++) {
@@ -382,11 +369,6 @@ function autoConnectStuckNodes() {
             const n2 = graph.nodes[j];
 
             const cls = classifyEdgeByGeometry(n1, n2);
-
-            if (cls.type === 'overlap_defect') {
-                defects++;
-                continue;
-            }
 
             const a = n1.id < n2.id ? n1.id : n2.id;
             const b = n1.id < n2.id ? n2.id : n1.id;
@@ -415,11 +397,11 @@ function autoConnectStuckNodes() {
         }
     }
 
-    if (newSeams > 0 || newBridges > 0 || defects > 0) {
+    if (newSeams > 0 || newBridges > 0) {
         const consoleEl = document.getElementById('console');
         if (consoleEl) {
             consoleEl.style.display = 'block';
-            consoleEl.innerHTML += `<div class="line" style="color:#00ffaa;">🔗 [Auto-Connect]: цепных швов: ${newSeams}, мостов: ${newBridges}, наложений-дефектов: ${defects}</div>`;
+            consoleEl.innerHTML += `<div class="line" style="color:#00ffaa;">🔗 [Auto-Connect]: цепных швов: ${newSeams}, мостов: ${newBridges}</div>`;
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
         updateStats();
@@ -428,14 +410,12 @@ function autoConnectStuckNodes() {
 
 function rebuildEdgeTypesByGeometry() {
     if (graph.nodes.length <= 300) saveState();
-
     const nmap = {};
     graph.nodes.forEach(n => { nmap[n.id] = n; });
 
     let seams = 0;
     let bridges = 0;
     let longs = 0;
-    let defects = 0;
 
     graph.edges.forEach(edge => {
         const n1 = nmap[edge.from];
@@ -444,11 +424,7 @@ function rebuildEdgeTypesByGeometry() {
 
         const cls = classifyEdgeByGeometry(n1, n2);
 
-        if (cls.type === 'overlap_defect') {
-            edge.type = 'overlap_defect';
-            edge.weight = 0.0;
-            defects++;
-        } else if (cls.type === 'chain_seam') {
+        if (cls.type === 'chain_seam') {
             edge.type = 'chain_seam';
             edge.weight = 1.0;
             seams++;
@@ -470,10 +446,11 @@ function rebuildEdgeTypesByGeometry() {
     const consoleEl = document.getElementById('console');
     if (consoleEl) {
         consoleEl.style.display = 'block';
-        consoleEl.innerHTML += `<div class="line success">🧹 [Rebuild Edge Types]: chain_seam=${seams}, bridge=${bridges}, long=${longs}, overlap_defect=${defects}</div>`;
+        consoleEl.innerHTML += `<div class="line success">🧹 [Rebuild Edge Types]: chain_seam=${seams}, bridge=${bridges}, long=${longs}</div>`;
         consoleEl.scrollTop = consoleEl.scrollHeight;
     }
 }
+
 window.rebuildEdgeTypesByGeometry = rebuildEdgeTypesByGeometry;
 // === END PATCH: chain_seam ===
 
@@ -490,10 +467,7 @@ function compileTopologyToQuantumCircuit() {
     const consoleEl = document.getElementById('console');
     if (consoleEl && graph.nodes.length > 0) {
         consoleEl.style.display = 'block';
-        consoleEl.innerHTML += `
-            <div class="line success">🧬 [Авто-Компилятор схемы]: Сгенерирован топологический пайплайн</div>
-            <div class="line">🛠️ [Активные вентили]: ${circuitGates.join(' — ')}</div>
-        `;
+        consoleEl.innerHTML += `<div class="line success">🧬 [Авто-Компилятор схемы]: Сгенерирован топологический пайплайн</div> <div class="line">🛠️ [Активные вентили]: ${circuitGates.join(' — ')}</div>`;
     }
 }
 
@@ -554,10 +528,7 @@ async function sendDataToPythonCore(isSaving = true) {
         const consoleEl = document.getElementById('console');
         if (consoleEl) {
             consoleEl.style.display = 'block';
-            consoleEl.innerHTML += `
-                <div class="line success">⚡ [Optical Bridge Core]: Транслировано узлов: ${opticalResult.totalOpticalNodes}, Каналов: ${opticalResult.opticalChannels.length}</div>
-                <div class="line" style="color:#00ffaa;">🌀 [SfiralMeshModel]: Фазовые маски рассчитаны (Слоев: ${phaseMasks.length}), Время расчета: ${executionTime}мс</div>
-            `;
+            consoleEl.innerHTML += `<div class="line success">⚡ [Optical Bridge Core]: Транслировано узлов: ${opticalResult.totalOpticalNodes}, Каналов: ${opticalResult.opticalChannels.length}</div> <div class="line" style="color:#00ffaa;">🌀 [SfiralMeshModel]: Фазовые маски рассчитаны (Слоев: ${phaseMasks.length}), Время расчета: ${executionTime}мс</div>`;
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
         updateQuantumColors(nodesQuantum);
@@ -593,26 +564,34 @@ const sendDataPythonCoreThrottled = () => {
 const container = document.getElementById('canvasContainer');
 const canvas = document.getElementById('renderCanvas');
 canvas.style.touchAction = 'none';
+
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
 const scene = new THREE.Scene();
 const ambient = new THREE.AmbientLight(0xffffff, 0.9);
 scene.add(ambient);
+
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
 dirLight.position.set(1, 2, 1);
 scene.add(dirLight);
+
 const gridHelper = new THREE.GridHelper(1000, 20, 0x00e5ff, 0x1f2d4a);
 scene.add(gridHelper);
+
 const objectsGroup = new THREE.Group();
 objectsGroup.name = "GIDEON_Fractal_Root_Container";
 scene.add(objectsGroup);
 scene.add(groupTransformProxy);
 objectsGroup.add(batchLines.right, batchLines.left, batchLines.s);
+
 const wiringPortMeshes = new THREE.Group();
 scene.add(wiringPortMeshes);
+
 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 10000);
 camera.position.set(600, 400, 800);
 camera.lookAt(0, 0, 0);
+
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
@@ -653,7 +632,6 @@ transformControls.addEventListener('dragging-changed', (event) => {
         const targetNodes = selectedNodes.map(nid => getNode(nid)).filter(Boolean);
         targetNodes.forEach(n => { cx += n.x; cy += n.y; cz += n.z; });
         cx /= targetNodes.length; cy /= targetNodes.length; cz /= targetNodes.length;
-
         groupTransformProxy.position.set(cx, cy, cz);
         groupTransformProxy.rotation.set(0, 0, 0);
         groupTransformProxy.updateMatrixWorld();
@@ -666,7 +644,6 @@ transformControls.addEventListener('dragging-changed', (event) => {
 transformControls.addEventListener('change', () => {
     if (!transformControls.object || selectedNodes.length === 0) return;
     const rotSensitivity = isShiftPressed ? 0.1 : 0.35;
-
     const deltaPos = new THREE.Vector3().subVectors(groupTransformProxy.position, lastProxyPosition);
     lastProxyPosition.copy(groupTransformProxy.position);
 
@@ -773,6 +750,7 @@ function resizeRenderer() {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
 }
+
 window.addEventListener('resize', resizeRenderer);
 
 // ============================================================
@@ -982,8 +960,6 @@ function updateEdges() {
                     bridgeColor = 0x00e5ff;
                 } else if (edge.type === 'long_bridge') {
                     bridgeColor = 0x888888;
-                } else if (edge.type === 'overlap_defect') {
-                    bridgeColor = 0xff4444;
                 } else if (isLeftPolarization) {
                     bridgeColor = 0x00d4ff;
                 }
@@ -1071,12 +1047,12 @@ function snapSelectedObjects(tolerance = 3.0) {
     logAction('SNAP_ALL_OR_SELECTED', { targets: targetIds, tolerance, adjustedCount: count });
     sendDataToPythonCore(true);
 }
+
 window.snapSelectedObjects = snapSelectedObjects;
 
 function updateSelectionHighlights() {
     const glowActive = sceneBrightness > 1.05;
     const glowOpacity = Math.min((sceneBrightness - 1.0) * 0.55, 0.65);
-
     meshMap.forEach((group, id) => {
         const isSelectedNode = selectedNodes.includes(id);
         clearGroupOverlays(group, 'isSelectionAura');
@@ -1383,7 +1359,6 @@ function ensureCameraRotInput() {
     if (input) return input;
     const rotZEl = document.getElementById('modalRotZ');
     if (!rotZEl || !rotZEl.parentElement) return null;
-
     const row = document.createElement('div');
     row.style.cssText = 'display:flex; align-items:center; gap:6px; margin-top:6px;';
     row.innerHTML = `
@@ -1410,7 +1385,6 @@ function mountBrightnessSlider() {
     const valEl = document.getElementById('sceneBrightnessVal');
     const wrap = document.getElementById('sceneBrightnessControl');
     if (!rangeEl) return;
-
     rangeEl.value = String(sceneBrightness);
     if (valEl) valEl.textContent = `${Math.round(sceneBrightness * 100)}%`;
 
@@ -1846,7 +1820,7 @@ class UIManager {
             else if (e.ctrlKey && key === 'v') { e.preventDefault(); pasteClipboard(); }
             else if (e.key === 'Delete' || e.key === 'Del') { e.preventDefault(); deleteSelected(); }
             else if (e.key === 'Escape') {
-                if(isWiringMode) this.toggleWiringMode();
+                if (isWiringMode) this.toggleWiringMode();
                 selectedNodes = []; selectedPart = null;
                 transformControls.detach(); updateSelectionHighlights(); renderProperties(null);
             }
@@ -1901,7 +1875,6 @@ function applyModalRotationLive() {
     const rz = parseFloat(document.getElementById('modalRotZ').value);
     const rCamEl = document.getElementById('modalRotCam');
     const rCam = rCamEl ? parseFloat(rCamEl.value) : NaN;
-
     if (isNaN(rx) && isNaN(ry) && isNaN(rz) && isNaN(rCam)) return;
 
     const targetRx = !isNaN(rx) ? rx : modalBaseRot[0];
@@ -1986,7 +1959,6 @@ function openRotateDialog() {
     camera.getWorldDirection(modalCamAxis).normalize();
     modalBaseCamRot = 0;
     if (rCamEl) rCamEl.value = 0;
-
     if (selectedNodes.length === 1) {
         const node = getNode(selectedNodes[0]);
         const angles = node?.params?.angles || [0, 0, 0];
@@ -2081,167 +2053,39 @@ function buildFractalComposition() {
     sendDataToPythonCore(true);
 }
 
-const _R_ID = 2;
-let _solverCtx = null;
-
-function _crc8(arr) {
-    let c = 0x5A;
-    for (let i = 0; i < arr.length; i++) {
-        c ^= arr[i];
-        for (let b = 0; b < 8; b++) c = (c & 0x80) ? ((c << 1) ^ 0x31) & 0xFF : (c << 1) & 0xFF;
-    }
-    return c;
-}
-
-function _getLocaleCode() {
-    const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase();
-    const off = -new Date().getTimezoneOffset();
-    if (tz.includes('qyzylorda') || tz.includes('kostanay')) return 10;
-    if (tz.includes('almaty') || tz.includes('astana')) return 11;
-    if (tz.includes('aqtobe') || tz.includes('aqtau') || tz.includes('oral') || tz.includes('atyrau')) return 12;
-    if (tz.includes('moscow')) return 20;
-    if (tz.includes('yekaterinburg')) return 21;
-    if (tz.includes('novosibirsk') || tz.includes('omsk') || tz.includes('krasnoyarsk')) return 22;
-    if (tz.includes('tashkent') || tz.includes('bishkek')) return 30;
-    return Math.min(255, Math.max(40, 100 + Math.round((off + 720) / 15)));
-}
-
-function _getEnvHash() {
-    const raw = [
-        screen?.width || 0, screen?.height || 0,
-        navigator?.hardwareConcurrency || 0,
-        navigator?.platform || '',
-        Intl.DateTimeFormat().resolvedOptions().timeZone || ''
-    ].join('|');
-    let h = 0x811C;
-    for (let i = 0; i < raw.length; i++) {
-        h ^= raw.charCodeAt(i);
-        h = (h * 0x0101) & 0xFFFF;
-    }
-    return h;
-}
-
-function _readFloatGrid(nodes) {
-    if (!Array.isArray(nodes) || nodes.length === 0) return null;
-    let c0 = null, c1 = null;
-    for (let i = 0; i < nodes.length; i++) {
-        const n = nodes[i], p = n.params || {};
-        const sc = Number(p.scale ?? 1.0), st = Number(p.stretch ?? SFIRAL_SQUARE_STRETCH);
-        const x = Number(n.x || 0), z = Number(n.z || 0);
-        const r = Number(p.radius ?? 140), l = Number(p.length ?? 190);
-        const u0 = Math.round(Math.abs(sc - Math.round(sc * 1e4) / 1e4) * 1e9);
-        const u1 = Math.round(Math.abs(st - Math.round(st * 1e4) / 1e4) * 1e9);
-        const vx = (x !== 0 && Math.abs(x) < 10000) ? x : r;
-        const vz = (z !== 0 && Math.abs(z) < 10000) ? z : l;
-        const u2 = Math.round(Math.abs(vx - Math.round(vx * 1e4) / 1e4) * 1e9);
-        const u3 = Math.round(Math.abs(vz - Math.round(vz * 1e4) / 1e4) * 1e9);
-        if (u0 > 65535 || u1 > 65535 || u2 > 65535 || u3 > 65535) continue;
-        const b = [(u0 >> 8) & 255, u0 & 255, (u1 >> 8) & 255, u1 & 255, (u2 >> 8) & 255, u2 & 255, (u3 >> 8) & 255, u3 & 255];
-        if (_crc8(b.slice(0, 7)) !== b[7]) continue;
-        if ((b[0] >> 4) === 0x0A && !c0) c0 = b;
-        else if (!c1) c1 = b;
-        if (c0 && c1) break;
-    }
-    if (!c0) return null;
-    const langMap = { 1: 'ru', 2: 'kk', 3: 'en', 4: 'zh', 5: 'de', 6: 'tr' };
-    return {
-        originRepo: (c0[0] >> 2) & 0x03,
-        saveCount: c0[1],
-        createdMin: (c0[2] << 16) | (c0[3] << 8) | c0[4],
-        originTz: c1 ? c1[6] : c0[5],
-        initNodes: c1 ? (((c0[6] & 0x0F) << 8) | c1[3]) : ((c0[6] & 0x0F) << 8),
-        lang: langMap[c0[6] >> 4] || 'other'
-    };
-}
-
-function _syncFloatGrid(g) {
-    if (!Array.isArray(g.nodes) || g.nodes.length === 0) return;
-    const nowMin = Math.max(0, Math.floor((Date.now() - 1767225600000) / 60000)) & 0xFFFFFF;
-    const curTz = _getLocaleCode();
-    const langStr = (navigator?.language || '').slice(0, 2).toLowerCase();
-    const langCode = { ru: 1, kk: 2, en: 3, zh: 4, de: 5, tr: 6 }[langStr] || 0;
-    const prev = _solverCtx;
-    const originRepo = prev ? prev.originRepo : (_R_ID & 0x03);
-    const saveCount = prev ? Math.min(255, prev.saveCount + 1) : 1;
-    const createdMin = prev ? prev.createdMin : nowMin;
-    const originTz = prev ? prev.originTz : curTz;
-    const initNodes = prev ? prev.initNodes : Math.min(4095, g.nodes.length);
-    const envHash = _getEnvHash();
-
-    const c0 = [
-        0xA0 | ((originRepo & 0x03) << 2) | (_R_ID & 0x03),
-        saveCount & 0xFF,
-        (createdMin >> 16) & 0xFF, (createdMin >> 8) & 0xFF, createdMin & 0xFF,
-        curTz & 0xFF,
-        ((langCode & 0x0F) << 4) | ((initNodes >> 8) & 0x0F),
-        0
-    ];
-    c0[7] = _crc8(c0.slice(0, 7));
-
-    const c1 = [
-        (nowMin >> 16) & 0xFF, (nowMin >> 8) & 0xFF, nowMin & 0xFF,
-        initNodes & 0xFF,
-        (envHash >> 8) & 0xFF, envHash & 0xFF,
-        originTz & 0xFF,
-        0
-    ];
-    c1[7] = _crc8(c1.slice(0, 7));
-
-    g.nodes.forEach((n, i) => {
-        if (!n.params) n.params = {};
-        const b = (i % 2 === 0) ? c0 : c1;
-        const u0 = (b[0] << 8) | b[1], u1 = (b[2] << 8) | b[3];
-        const u2 = (b[4] << 8) | b[5], u3 = (b[6] << 8) | b[7];
-        const sc0 = Math.round(Number(n.params.scale ?? 1.0) * 1e4) / 1e4;
-        const st0 = Math.round(Number(n.params.stretch ?? SFIRAL_SQUARE_STRETCH) * 1e4) / 1e4;
-        const x0 = Math.round(Number(n.x || 0) * 1e4) / 1e4;
-        const z0 = Math.round(Number(n.z || 0) * 1e4) / 1e4;
-        const r0 = Math.round(Number(n.params.radius ?? 140) * 1e4) / 1e4;
-        const l0 = Math.round(Number(n.params.length ?? 190) * 1e4) / 1e4;
-
-        n.params.scale = Number((sc0 + u0 * 1e-9).toFixed(9));
-        n.params.stretch = Number((st0 + u1 * 1e-9).toFixed(9));
-        if (x0 !== 0 && Math.abs(x0) < 10000) {
-            n.x = Number((x0 + (x0 > 0 ? 1 : -1) * u2 * 1e-9).toFixed(9));
-            n.params.radius = r0;
-        } else {
-            n.x = x0;
-            n.params.radius = Number((r0 + u2 * 1e-9).toFixed(9));
-        }
-        if (z0 !== 0 && Math.abs(z0) < 10000) {
-            n.z = Number((z0 + (z0 > 0 ? 1 : -1) * u3 * 1e-9).toFixed(9));
-            n.params.length = l0;
-        } else {
-            n.z = z0;
-            n.params.length = Number((l0 + u3 * 1e-9).toFixed(9));
-        }
-    });
-
-    _solverCtx = { originRepo, saveCount, createdMin, originTz, initNodes };
-}
-
+// ============================================================
+// ЗАЩИЩЕННОЕ СОХРАНЕНИЕ МОДЕЛИ (С МЕТКАМИ ЛИЦЕНЗИИ)
+// ============================================================
 async function saveModel() {
-    console.log("💾 Сохранение модели через Blob...");
+    console.log("💾 Сохранение защищенной модели...");
     if (graph.nodes.length <= 300) {
         await sendDataToPythonCore(true);
     }
-    const _g = JSON.parse(JSON.stringify(graph));
-    _syncFloatGrid(_g);
     const exportData = {
-        graph: _g,
+        metadata: {
+            generator: "GIDEON 3D Constructor",
+            license: "SFIRALIUM PUBLIC LICENSE (v1.0)",
+            commercial_use: false,
+            military_use: false,
+            copyright: "AGI Laboratory Sfiralium (O. S. Basargin, S. L. Chernenko)",
+            watermark_id: "SFIRAL-NC-PROT-2026-X9F8",
+            notice: "Strictly for non-commercial and non-military research use. Commercial exploitation is strictly prohibited."
+        },
+        graph: graph,
         design_timeline: designTimeline
     };
+
     const jsonStr = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", url);
-    downloadAnchor.setAttribute("download", `gideon_sfiral_model_${graph.nodes.length}_nodes.json`);
+    downloadAnchor.setAttribute("download", `gideon_sfiral_protected_${graph.nodes.length}_nodes.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    alert(`📦 Модель (${graph.nodes.length} сфиралей) сохранена на компьютер!`);
+    alert(`🔒 Модель защищена меткой Sfiralium Public License и сохранена (${graph.nodes.length} узлов)!`);
 }
 
 function fitCameraToNodes(nodes) {
@@ -2280,6 +2124,9 @@ function fitCameraToNodes(nodes) {
     controls.update();
 }
 
+// ============================================================
+// ЗАЩИЩЕННАЯ ЗАГРУЗКА И ПРОВЕРКА МЕТОК (loadModel)
+// ============================================================
 function loadModel(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -2287,6 +2134,19 @@ function loadModel(e) {
     reader.onload = function(event) {
         try {
             const loadedData = JSON.parse(event.target.result);
+
+            const metadata = loadedData.metadata || loadedData.license_info;
+            if (metadata && metadata.commercial_use === false) {
+                console.warn(`🔒 [Sfiralium Security]: Загружена модель под защитой ${metadata.license || 'Sfiralium Public License v1.0'}.`);
+                alert(
+                    `⚠️ ЮРИДИЧЕСКОЕ УВЕДОМЛЕНИЕ О ЛИЦЕНЗИИ\n\n` +
+                    `• Правообладатель: ${metadata.copyright || 'AGI Laboratory Sfiralium'}\n` +
+                    `• Лицензия: ${metadata.license || 'Sfiralium Public License v1.0'}\n` +
+                    `• Идентификатор метки: ${metadata.watermark_id || 'Protected'}\n\n` +
+                    `📌 Статус: Модель предназначена ИСКЛЮЧИТЕЛЬНО для некоммерческих и исследовательских целей. Коммерческая перепродажа запрещена.`
+                );
+            }
+
             let nodesArray = [];
             let edgesArray = [];
             let timelineArray = [];
@@ -2322,7 +2182,6 @@ function loadModel(e) {
                 timelineArray = loadedData.design_timeline || [];
             }
             if (nodesArray.length > 0) {
-                _solverCtx = _readFloatGrid(nodesArray);
                 showEdgesFlag = false;
                 const toggleEdgesBtn = document.getElementById('toggleEdgesBtn');
                 if (toggleEdgesBtn) {
@@ -2356,16 +2215,16 @@ function loadModel(e) {
                     return {
                         ...n,
                         id: nodeId,
-                        x: Math.round((Number(n.x) || 0) * 1e4) / 1e4,
-                        y: Math.round((Number(n.y) || 0) * 1e4) / 1e4,
-                        z: Math.round((Number(n.z) || 0) * 1e4) / 1e4,
+                        x: Number(n.x) || 0,
+                        y: Number(n.y) || 0,
+                        z: Number(n.z) || 0,
                         params: {
                             N: n.params?.N || 5,
                             target_len: n.params?.target_len || 1000,
-                            scale: Math.round((n.params?.scale ?? 1.0) * 1e4) / 1e4,
-                            stretch: Math.round((n.params?.stretch ?? SFIRAL_SQUARE_STRETCH) * 1e4) / 1e4,
-                            radius: Math.round((n.params?.radius || 140) * 1e4) / 1e4,
-                            length: Math.round((n.params?.length || 190) * 1e4) / 1e4,
+                            scale: n.params?.scale ?? 1.0,
+                            stretch: n.params?.stretch ?? SFIRAL_SQUARE_STRETCH,
+                            radius: n.params?.radius || 140,
+                            length: n.params?.length || 190,
                             isCustomScaled: n.params?.isCustomScaled || false,
                             isGroupScaled: n.params?.isGroupScaled || false,
                             angles: n.params?.angles ? [...n.params.angles] : [0, 0, 0],
@@ -2390,7 +2249,7 @@ function loadModel(e) {
                 selectedPart = null;
                 transformControls.detach();
                 renderProperties(null);
-                fitCameraToNodes(graph.nodes);
+                fitCameraToNodes(nodesArray);
 
                 if (graph.nodes.length <= 300) {
                     sendDataToPythonCore(false);
@@ -2417,20 +2276,13 @@ function loadModel(e) {
 function renderProperties(id) {
     const container = document.getElementById('propContent');
     if (!container) return;
-    if (selectedNodes.length === 0) { container.innerHTML = '<div class="empty">Выберите сфираль или элемент</div>'; return; }
+    if (selectedNodes.length === 0) { container.innerHTML = 'Выберите сфираль или элемент'; return; }
     if (selectedNodes.length > 1) {
         if (selectedPart) selectedPart = null;
         const sampleNode = getNode(selectedNodes[0]);
         const currentGroupScale = sampleNode?.params?.scale ?? 1.0;
         const currentGroupStretch = sampleNode?.params?.stretch ?? SFIRAL_SQUARE_STRETCH;
-        container.innerHTML = `
-            <div class="prop-group highlight">📦 Группа: <b>${selectedNodes.length} шт.</b></div>
-            <div class="prop-group"><label>Общий масштаб группы</label><input type="number" id="groupScale" value="${currentGroupScale}" min="0.1" max="10.0" step="0.1" /></div>
-            <div class="prop-group"><label>Пружина / Растяжение Z</label><input type="number" id="groupStretch" value="${currentGroupStretch}" min="0.1" max="5.0" step="0.0001" /></div>
-            <div class="prop-group" style="margin-top:10px;">
-                <button id="teachGroupBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этой группе</button>
-            </div>
-        `;
+        container.innerHTML = `<div class="prop-group highlight">📦 Группа: <b>${selectedNodes.length} шт.</b></div> <div class="prop-group"><label>Общий масштаб группы</label><input type="number" id="groupScale" value="${currentGroupScale}" min="0.1" max="10.0" step="0.1" /></div> <div class="prop-group"><label>Пружина / Растяжение Z</label><input type="number" id="groupStretch" value="${currentGroupStretch}" min="0.1" max="5.0" step="0.0001" /></div> <div class="prop-group" style="margin-top:10px;"> <button id="teachGroupBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этой группе</button> </div>`;
         document.getElementById('groupScale').addEventListener('input', (e) => {
             const sc = parseFloat(e.target.value);
             if (!isNaN(sc)) { applyScaleAndStretchToNodes(selectedNodes, sc, undefined); }
@@ -2449,7 +2301,7 @@ function renderProperties(id) {
         return;
     }
     const node = getNode(id);
-    if (!node) { container.innerHTML = '<div class="empty">Выберите сфираль или элемент</div>'; return; }
+    if (!node) { container.innerHTML = 'Выберите сфираль или элемент'; return; }
     if (!node.params) node.params = {};
     const p = node.params;
     if (selectedPart) {
@@ -2459,13 +2311,7 @@ function renderProperties(id) {
         else if (selectedPart === 'sLeft') subKey = 'sLeftSub';
         if (!node.params[subKey]) node.params[subKey] = { height: 100 };
         const sub = node.params[subKey];
-        container.innerHTML = `
-            <div class="prop-group highlight">🎯 Подобъект: ${selectedPart}</div>
-            <div class="prop-group"><label>Сжатие по высоте (%)</label><input type="number" id="subHeight" value="${sub.height}" min="10" max="500" step="5" /></div>
-            <div class="prop-group" style="margin-top:10px;">
-                <button id="teachPartBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этому элементу</button>
-            </div>
-        `;
+        container.innerHTML = `<div class="prop-group highlight">🎯 Подобъект: ${selectedPart}</div> <div class="prop-group"><label>Сжатие по высоте (%)</label><input type="number" id="subHeight" value="${sub.height}" min="10" max="500" step="5" /></div> <div class="prop-group" style="margin-top:10px;"> <button id="teachPartBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этому элементу</button> </div>`;
         document.getElementById('subHeight').addEventListener('input', () => {
             const h = parseFloat(document.getElementById('subHeight').value);
             if (!isNaN(h)) sub.height = h;
@@ -2481,23 +2327,7 @@ function renderProperties(id) {
         return;
     }
     const activeGate = p.activeGate || 'ROUTER_SWAP';
-    container.innerHTML = `
-        <div class="prop-group highlight">📦 Сфираль [ID: ${node.id}]</div>
-        <div class="prop-group">
-            <label>Управляющий вентиль</label>
-            <select id="nodeGateSelect" style="width:100%; background:#1f2d4a; color:#fff; padding:4px; border-radius:4px; font-size:0.75rem;">
-                <option value="ROUTER_SWAP" ${activeGate === 'ROUTER_SWAP' ? 'selected' : ''}>Маршрутизатор (SWAP потоков)</option>
-                <option value="READOUT" ${activeGate === 'READOUT' ? 'selected' : ''}>Датчик считывания (Readout)</option>
-                <option value="SCALE_CORRECTOR" ${activeGate === 'SCALE_CORRECTOR' ? 'selected' : ''}>Корректор масштаба</option>
-                <option value="RESET" ${activeGate === 'RESET' ? 'selected' : ''}>Инициализатор (Reset)</option>
-            </select>
-        </div>
-        <div class="prop-group"><label>Общий масштаб (+ / -)</label><input type="number" id="propScale" value="${p.scale ?? 1.0}" min="0.1" max="10.0" step="0.1" /></div>
-        <div class="prop-group"><label>Пружина / Растяжение Z (] / [)</label><input type="number" id="propStretch" value="${p.stretch ?? SFIRAL_SQUARE_STRETCH}" min="0.1" max="5.0" step="0.0001" /></div>
-        <div class="prop-group" style="margin-top:10px;">
-            <button id="teachNodeBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этой Сфирали</button>
-        </div>
-    `;
+    container.innerHTML = `<div class="prop-group highlight">📦 Сфираль [ID: ${node.id}]</div> <div class="prop-group"> <label>Управляющий вентиль</label> <select id="nodeGateSelect" style="width:100%; background:#1f2d4a; color:#fff; padding:4px; border-radius:4px; font-size:0.75rem;"> <option value="ROUTER_SWAP" ${activeGate === 'ROUTER_SWAP' ? 'selected' : ''}>Маршрутизатор (SWAP потоков)</option> <option value="READOUT" ${activeGate === 'READOUT' ? 'selected' : ''}>Датчик считывания (Readout)</option> <option value="SCALE_CORRECTOR" ${activeGate === 'SCALE_CORRECTOR' ? 'selected' : ''}>Корректор масштаба</option> <option value="RESET" ${activeGate === 'RESET' ? 'selected' : ''}>Инициализатор (Reset)</option> </select> </div> <div class="prop-group"><label>Общий масштаб (+ / -)</label><input type="number" id="propScale" value="${p.scale ?? 1.0}" min="0.1" max="10.0" step="0.1" /></div> <div class="prop-group"><label>Пружина / Растяжение Z (] / [)</label><input type="number" id="propStretch" value="${p.stretch ?? SFIRAL_SQUARE_STRETCH}" min="0.1" max="5.0" step="0.0001" /></div> <div class="prop-group" style="margin-top:10px;"> <button id="teachNodeBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этой Сфирали</button> </div>`;
     document.getElementById('nodeGateSelect')?.addEventListener('change', (e) => {
         node.params.activeGate = e.target.value;
         saveState();
@@ -2525,7 +2355,6 @@ function renderProperties(id) {
 function init() {
     new UIManager();
     mountBrightnessSlider();
-
     const toggleEdgesBtn = document.getElementById('toggleEdgesBtn');
     if (toggleEdgesBtn) {
         toggleEdgesBtn.innerHTML = showEdgesFlag ? '🔗 Связи: ВКЛ' : '🚫 Связи: ВЫКЛ';
@@ -2553,6 +2382,7 @@ function init() {
     saveState();
     animate();
 }
+
 init();
 
 // ============================================================
@@ -2567,24 +2397,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (optBtn && modal) {
         optBtn.addEventListener('click', () => {
             const data = opticalBridge.convertGraphToOpticalMatrix(graph.nodes, graph.edges);
-            let nodesHtml = data.nodesData.map(n => `
-                <div style="background:#1c2841; padding:6px; margin-bottom:6px; border-radius:4px; border-left:3px solid #00ffaa;">
-                    <b>Сфираль ID: ${n.id}</b> | Адрес: <span style="color:#00ffaa;">${n.addressCode}</span><br>
-                    • MZI Матрица [0][0]: Real = <span style="color:#ffaa00;">${n.mziTransferMatrix[0][0].r.toFixed(4)}</span>, Imag = <span style="color:#ffaa00;">${n.mziTransferMatrix[0][0].i.toFixed(4)}</span><br>
-                    • Кьютрит (XYZ-фаза): [L: <span style="color:#00c0ff;">${n.waveState.L.toFixed(2)}</span>, S: <span style="color:#ffea00;">${n.waveState.S.toFixed(2)}</span>, R: <span style="color:#ff3333;">${n.waveState.R.toFixed(2)}</span>]
-                </div>
-            `).join('');
-            content.innerHTML = `
-                <div style="margin-bottom:12px; color:#fff;">
-                    ⚡ <b>Статус сети:</b> Активных узлов: <span style="color:#00e5ff;">${data.totalOpticalNodes}</span> | Каналов связи: <span style="color:#00e5ff;">${data.opticalChannels.length}</span>
-                </div>
-                <div style="margin-bottom:12px; background:#101726; padding:8px; border-radius:4px;">
-                    🌀 <b>Дифракционный фронт ONNet:</b> Сетка ${data.diffractionFieldSummary}x${data.diffractionFieldSummary} просчитана.<br>
-                    📐 <b>Сетка Клементса:</b> Тип: ${data.clementsMeshConfig.meshType}, Этапов разложения: ${data.clementsMeshConfig.stages}.
-                </div>
-                <div style="font-weight:bold; color:#00e5ff; margin-bottom:6px;">Состояние всех узлов под капотом (MZI, дифракция & Клементс):</div>
-                ${nodesHtml || '<div style="color:#ff4444;">Нет активных узлов на холсте. Добавьте сфирали!</div>'}
-            `;
+            let nodesHtml = data.nodesData.map(n => `<div style="background:#1c2841; padding:6px; margin-bottom:6px; border-radius:4px; border-left:3px solid #00ffaa;"> <b>Сфираль ID: ${n.id}</b> | Адрес: <span style="color:#00ffaa;">${n.addressCode}</span><br> • MZI Матрица [0][0]: Real = <span style="color:#ffaa00;">${n.mziTransferMatrix[0][0].r.toFixed(4)}</span>, Imag = <span style="color:#ffaa00;">${n.mziTransferMatrix[0][0].i.toFixed(4)}</span><br> • Кьютрит (XYZ-фаза): [L: <span style="color:#00c0ff;">${n.waveState.L.toFixed(2)}</span>, S: <span style="color:#ffea00;">${n.waveState.S.toFixed(2)}</span>, R: <span style="color:#ff3333;">${n.waveState.R.toFixed(2)}</span>] </div>`).join('');
+            content.innerHTML = `<div style="margin-bottom:12px; color:#fff;"> ⚡ <b>Статус сети:</b> Активных узлов: <span style="color:#00e5ff;">${data.totalOpticalNodes}</span> | Каналов связи: <span style="color:#00e5ff;">${data.opticalChannels.length}</span> </div> <div style="margin-bottom:12px; background:#101726; padding:8px; border-radius:4px;"> 🌀 <b>Дифракционный фронт ONNet:</b> Сетка ${data.diffractionFieldSummary}x${data.diffractionFieldSummary} просчитана.<br> 📐 <b>Сетка Клементса:</b> Тип: ${data.clementsMeshConfig.meshType}, Этапов разложения: ${data.clementsMeshConfig.stages}. </div> <div style="font-weight:bold; color:#00e5ff; margin-bottom:6px;">Состояние всех узлов под капотом (MZI, дифракция & Клементс):</div> ${nodesHtml || '<div style="color:#ff4444;">Нет активных узлов на холсте. Добавьте сфирали!</div>'}`;
             if (modal.firstElementChild) {
                 modal.firstElementChild.style.position = 'relative';
             }
@@ -2768,11 +2582,12 @@ window.__agentSetGraph = function (g) {
     fitCameraToNodes(nodes);
     window.__dbg = graph;
 };
+
 window.__agentLog = function (m, c) {
     var e = document.getElementById('console');
     if (e) {
         e.style.display = 'block';
-        e.innerHTML += '<div class="line" style="color:' + (c || '#ffaa00') + '">' + m + '</div>';
+        e.innerHTML += '<div class="line" style="color:' + (c || '#00ffaa') + '">' + m + '</div>';
         e.scrollTop = e.scrollHeight;
     }
 };
@@ -2785,7 +2600,7 @@ window.__agentLearnFromDataset = async function (name, steps) {
     function log(m, c) {
         if (el) {
             el.style.display = 'block';
-            el.innerHTML += '<div class="line" style="color:' + (c || '#ffaa00') + '">' + m + '</div>';
+            el.innerHTML += '<div class="line" style="color:' + (c || '#00ffaa') + '">' + m + '</div>';
             el.scrollTop = el.scrollHeight;
         }
     }

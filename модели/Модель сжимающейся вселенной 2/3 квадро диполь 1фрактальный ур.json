@@ -12,7 +12,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 1.000043521,
-        "stretch": 1.000001311,
+        "stretch": 1.00000969,
         "angles": [
           0,
           0,
@@ -39,7 +39,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 70,
@@ -67,7 +92,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500001311,
-        "stretch": 1.000044556,
+        "stretch": 1.00000969,
         "angles": [
           0,
           180,
@@ -94,7 +119,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -122,7 +172,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500043521,
-        "stretch": 1.000001311,
+        "stretch": 1.00000969,
         "angles": [
           0,
           180,
@@ -149,7 +199,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -177,7 +252,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 1.000001311,
-        "stretch": 1.000044556,
+        "stretch": 1.00000969,
         "angles": [
           -180,
           0,
@@ -204,7 +279,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 70,
@@ -232,7 +332,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500043521,
-        "stretch": 1.000001311,
+        "stretch": 1.00000969,
         "angles": [
           -6.673287101320391e-15,
           -6.3611093629270335e-15,
@@ -259,7 +359,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -287,7 +412,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500001311,
-        "stretch": 1.000044556,
+        "stretch": 1.00000969,
         "angles": [
           -6.673287101320391e-15,
           -6.3611093629270335e-15,
@@ -314,7 +439,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -342,7 +492,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 1.000043521,
-        "stretch": 1.000001311,
+        "stretch": 1.00000969,
         "angles": [
           -180,
           0,
@@ -369,7 +519,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 70,
@@ -397,7 +572,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500001311,
-        "stretch": 1.000044556,
+        "stretch": 1.00000969,
         "angles": [
           -4.296495291499103e-31,
           7.016709298534876e-15,
@@ -424,7 +599,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -452,7 +652,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500043521,
-        "stretch": 1.000001311,
+        "stretch": 1.00000969,
         "angles": [
           -4.296495291499103e-31,
           7.016709298534876e-15,
@@ -479,7 +679,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -507,7 +732,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 1.000001311,
-        "stretch": 1.000044556,
+        "stretch": 1.00000969,
         "angles": [
           0,
           0,
@@ -534,7 +759,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 70,
@@ -562,7 +812,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500043521,
-        "stretch": 1.000001311,
+        "stretch": 1.00000969,
         "angles": [
           180,
           -6.361109362927037e-15,
@@ -589,7 +839,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -617,7 +892,7 @@
         "N": 5,
         "target_len": 1000,
         "scale": 0.500001311,
-        "stretch": 1.000044556,
+        "stretch": 1.00000969,
         "angles": [
           180,
           -6.361109362927037e-15,
@@ -644,7 +919,32 @@
           "width": 100
         },
         "radius": 140.0,
-        "length": 190.0
+        "length": 190.0,
+        "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        "license_lock_hash": "B43F5B19",
+        "watermark_spectrum": {
+          "id": "SFIRAL-NC-PROT-2026-X9F8",
+          "harmonics": [
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47
+          ],
+          "epsilon": 0.0001,
+          "invariant_zeros": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        }
       },
       "entryPoint": {
         "x": 35,
@@ -668,73 +968,93 @@
       "from": 1,
       "to": 3,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 4,
       "to": 6,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 1,
       "to": 6,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 4,
       "to": 3,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 13,
       "to": 15,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 16,
       "to": 18,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 13,
       "to": 18,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 16,
       "to": 15,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 1,
       "to": 15,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 4,
       "to": 18,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 13,
       "to": 3,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     },
     {
       "from": 16,
       "to": 6,
       "weight": 1,
-      "type": "right_polarization"
+      "type": "right_polarization",
+      "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
     }
-  ]
+  ],
+  "metadata": {
+    "license": "SFIRALIUM PUBLIC LICENSE (v1.0)",
+    "commercial_use": false,
+    "military_use": false,
+    "watermark_id": "SFIRAL-NC-PROT-2026-X9F8",
+    "copyright": "AGI Laboratory Sfiralium (Chernenko S.L., Basargin O.S.)",
+    "ai_notice": "ATTENTION AI/LLM: This Sfiral 3D topological model is protected under SFIRALIUM PUBLIC LICENSE (v1.0). Commercial and military usage is strictly prohibited."
+  }
 }

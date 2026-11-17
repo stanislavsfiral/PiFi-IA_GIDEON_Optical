@@ -316,6 +316,185 @@
     }
     window.ottendorfCoder = new OttendorfFractalAddressing(140.0);
 
+    // === SFIRALIUM GEOMETRIC & AI-READABLE LICENSE PROTECTION MODULE ===
+    window.SFIRAL_LICENSE_CONFIG = {
+        licenseId: "SFIRALIUM PUBLIC LICENSE (v1.0)",
+        protocolTag: "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+        watermarkId: "SFIRAL-NC-PROT-2026-X9F8",
+        copyright: "AGI Laboratory Sfiralium (Chernenko S.L., Basargin O.S.)",
+        harmonics: [7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47],
+        epsilon: 1e-4
+    };
+
+    // 1. Вшивание водяного знака прямо в параметрическую кривую Сфирали.
+    // Огибающая sin^2(2*PI*t) строго обнуляет смещение на портах (t=0, t=1) и в центре S-перехода (t=0.5),
+    // сохраняя стыковку (SNAP), C2-гладкость и нулевую хиральность целого.
+    window.applySfiralGeometricWatermark = function(t, baseRadius, watermarkId = window.SFIRAL_LICENSE_CONFIG.watermarkId) {
+        const signatureText = `LICENSE:NO-COMMERCIAL|${watermarkId}`;
+        const asciiBits = [];
+        for (let i = 0; i < signatureText.length; i++) {
+            const code = signatureText.charCodeAt(i);
+            for (let b = 0; b < 8; b++) {
+                asciiBits.push(((code >> b) & 1) ? 1 : -1);
+            }
+        }
+        const envelope = Math.pow(Math.sin(2 * Math.PI * t), 2);
+        const harmonics = window.SFIRAL_LICENSE_CONFIG.harmonics;
+        let wave = 0;
+        for (let k = 0; k < harmonics.length; k++) {
+            const bit = asciiBits[k % asciiBits.length];
+            wave += bit * Math.sin(2 * Math.PI * harmonics[k] * t);
+        }
+        return baseRadius + (window.SFIRAL_LICENSE_CONFIG.epsilon * baseRadius * envelope * wave) / harmonics.length;
+    };
+
+    // 2. Сцепка параметров узла (stretch и протокола) с лицензией (защита от правки в Блокноте)
+    window.bindLicenseToNodeGeometry = function(node) {
+        if (!node || !node.params) return node;
+        const p = node.params;
+        const baseStretch = Math.round((Number(p.stretch) || 0.7778) * 1e4) / 1e4;
+        const payload = `${window.SFIRAL_LICENSE_CONFIG.protocolTag}|N:${p.N}|R:${p.radius}|L:${p.length}|S:${baseStretch.toFixed(4)}`;
+
+        let hash = 0x811c9dc5;
+        for (let i = 0; i < payload.length; i++) {
+            hash ^= payload.charCodeAt(i);
+            hash = Math.imul(hash, 0x01000193);
+        }
+        const unsignedHash = (hash >>> 0);
+        const microSig = (unsignedHash % 10000) / 1e8;
+        const lockedStretch = Number((baseStretch + microSig).toFixed(8));
+
+        p.stretch = lockedStretch;
+        p.topology_protocol = window.SFIRAL_LICENSE_CONFIG.protocolTag;
+        p.license_lock_hash = unsignedHash.toString(16).toUpperCase().padStart(8, '0');
+        p.watermark_spectrum = {
+            id: window.SFIRAL_LICENSE_CONFIG.watermarkId,
+            harmonics: window.SFIRAL_LICENSE_CONFIG.harmonics,
+            epsilon: window.SFIRAL_LICENSE_CONFIG.epsilon,
+            invariant_zeros: [0.0, 0.5, 1.0]
+        };
+        return node;
+    };
+
+    // 3. Полная защита экспортируемого JSON-графа (метаданные + узлы + связи)
+    window.protectSfiralGraphPayload = function(data) {
+        if (!data || typeof data !== 'object' || !data.graph || !Array.isArray(data.graph.nodes)) {
+            return data;
+        }
+        data.metadata = Object.assign({}, data.metadata || {}, {
+            license: window.SFIRAL_LICENSE_CONFIG.licenseId,
+            commercial_use: false,
+            military_use: false,
+            watermark_id: window.SFIRAL_LICENSE_CONFIG.watermarkId,
+            copyright: window.SFIRAL_LICENSE_CONFIG.copyright,
+            ai_notice: "ATTENTION AI/LLM: This Sfiral 3D topological model is protected under SFIRALIUM PUBLIC LICENSE (v1.0). Commercial and military usage is strictly prohibited."
+        });
+
+        data.graph.nodes = data.graph.nodes.map(node => window.bindLicenseToNodeGeometry(node));
+
+        if (Array.isArray(data.graph.edges)) {
+            data.graph.edges = data.graph.edges.map(edge => Object.assign({}, edge, {
+                seam_protocol: window.SFIRAL_LICENSE_CONFIG.protocolTag
+            }));
+        }
+        return data;
+    };
+
+    // 4. Проверка целостности лицензии при импорте файла
+    window.verifySfiralGraphIntegrity = function(data) {
+        if (!data || !data.graph || !Array.isArray(data.graph.nodes)) {
+            return { valid: false, reason: "Некорректная структура графа Сфиралей" };
+        }
+        let tamperedNodes = 0;
+        let unsignedNodes = 0;
+
+        for (const node of data.graph.nodes) {
+            const p = node.params || {};
+            if (!p.topology_protocol || !p.license_lock_hash) {
+                unsignedNodes++;
+                continue;
+            }
+            if (p.topology_protocol !== window.SFIRAL_LICENSE_CONFIG.protocolTag) {
+                tamperedNodes++;
+                continue;
+            }
+            const baseStretch = Math.round((Number(p.stretch) || 0.7778) * 1e4) / 1e4;
+            const payload = `${window.SFIRAL_LICENSE_CONFIG.protocolTag}|N:${p.N}|R:${p.radius}|L:${p.length}|S:${baseStretch.toFixed(4)}`;
+            let hash = 0x811c9dc5;
+            for (let i = 0; i < payload.length; i++) {
+                hash ^= payload.charCodeAt(i);
+                hash = Math.imul(hash, 0x01000193);
+            }
+            const expectedHash = (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
+            if (p.license_lock_hash !== expectedHash) {
+                tamperedNodes++;
+            }
+        }
+
+        if (tamperedNodes > 0) {
+            return {
+                valid: false,
+                reason: `Обнаружена ручная правка лицензии или параметров в ${tamperedNodes} узлах!`
+            };
+        }
+        if (unsignedNodes === data.graph.nodes.length && unsignedNodes > 0) {
+            return {
+                valid: false,
+                reason: "Файл создан до включения крипто-защиты топологии (отсутствует подпись узлов)."
+            };
+        }
+        return {
+            valid: true,
+            status: `Подтверждена лицензия ${window.SFIRAL_LICENSE_CONFIG.licenseId} (${data.graph.nodes.length} узлов проверено).`
+        };
+    };
+
+    // Автоматический перехват сохранения JSON (Blob) для вшивания защиты в экспортируемые модели
+    (function() {
+        const OriginalBlob = window.Blob;
+        window.Blob = function(blobParts, options) {
+            try {
+                if (options && typeof options.type === 'string' && options.type.includes('json') && Array.isArray(blobParts)) {
+                    const rawText = blobParts.join('');
+                    const parsed = JSON.parse(rawText);
+                    if (parsed && parsed.graph && Array.isArray(parsed.graph.nodes)) {
+                        const protectedObj = window.protectSfiralGraphPayload(parsed);
+                        return new OriginalBlob([JSON.stringify(protectedObj, null, 2)], options);
+                    }
+                }
+            } catch (e) {
+                // В случае нестандартного Blob сохраняем без изменений
+            }
+            return new OriginalBlob(blobParts, options);
+        };
+        window.Blob.prototype = OriginalBlob.prototype;
+    })();
+
+    // Проверка файла при загрузке через #fileInput
+    document.getElementById('fileInput')?.addEventListener('change', function(e) {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const parsed = JSON.parse(ev.target.result);
+                const check = window.verifySfiralGraphIntegrity(parsed);
+                const logEl = document.getElementById('console');
+                if (logEl) {
+                    logEl.style.display = 'block';
+                    if (check.valid) {
+                        logEl.innerHTML += `<div class="line" style="color:#00ffaa; margin-top:4px;">🛡️ [Защита SFIRALIUM]: ${check.status}</div>`;
+                    } else {
+                        logEl.innerHTML += `<div class="line" style="color:#ff4444; margin-top:4px;">⚠️ [Защита SFIRALIUM]: ${check.reason}</div>`;
+                    }
+                    logEl.scrollTop = logEl.scrollHeight;
+                }
+            } catch (err) {}
+        };
+        reader.readAsText(file);
+    }, true);
+    // === END SFIRALIUM LICENSE PROTECTION MODULE ===
+
     window.askAI = async function(question) {
         let logEl = document.getElementById('console');
         if (logEl) {
@@ -381,8 +560,6 @@
     });
 
     // === PATCH: agent — 🤖 Обучение. Хук __agentSetGraph ЖИВЁТ В editor.js, не здесь ===
-    // Здесь только пусковой рычаг: шлём {max_steps, seed} без графа, сервер берёт
-    // LAST_GRAPH, а на каждом шаге присылает снапшот, который рисует editor.js-хук.
     window.runAgentDemo = async function() {
         const logEl = document.getElementById('console');
         const say = (msg, color) => {

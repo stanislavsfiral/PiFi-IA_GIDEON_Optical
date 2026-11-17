@@ -11,7 +11,7 @@
           "N": 5,
           "target_len": 1000,
           "scale": 1.000043521,
-          "stretch": 0.777801802,
+          "stretch": 0.77780485,
           "radius": 140.0,
           "length": 190.0,
           "isCustomScaled": false,
@@ -37,6 +37,31 @@
           },
           "sLeftSub": {
             "height": 100
+          },
+          "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+          "license_lock_hash": "356C0095",
+          "watermark_spectrum": {
+            "id": "SFIRAL-NC-PROT-2026-X9F8",
+            "harmonics": [
+              7,
+              11,
+              13,
+              17,
+              19,
+              23,
+              29,
+              31,
+              37,
+              41,
+              43,
+              47
+            ],
+            "epsilon": 0.0001,
+            "invariant_zeros": [
+              0.0,
+              0.5,
+              1.0
+            ]
           }
         },
         "entryPoint": {
@@ -65,7 +90,7 @@
           "N": 5,
           "target_len": 1000,
           "scale": 1.000001802,
-          "stretch": 0.777933799,
+          "stretch": 0.77792866,
           "radius": 140.0,
           "length": 190.0,
           "isCustomScaled": false,
@@ -91,6 +116,31 @@
           },
           "sLeftSub": {
             "height": 100
+          },
+          "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+          "license_lock_hash": "346BFF02",
+          "watermark_spectrum": {
+            "id": "SFIRAL-NC-PROT-2026-X9F8",
+            "harmonics": [
+              7,
+              11,
+              13,
+              17,
+              19,
+              23,
+              29,
+              31,
+              37,
+              41,
+              43,
+              47
+            ],
+            "epsilon": 0.0001,
+            "invariant_zeros": [
+              0.0,
+              0.5,
+              1.0
+            ]
           }
         },
         "entryPoint": {
@@ -119,7 +169,7 @@
           "N": 5,
           "target_len": 1000,
           "scale": 1.000043521,
-          "stretch": 0.777801802,
+          "stretch": 0.77780485,
           "radius": 140.0,
           "length": 190.0,
           "isCustomScaled": false,
@@ -145,6 +195,31 @@
           },
           "sLeftSub": {
             "height": 100
+          },
+          "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+          "license_lock_hash": "356C0095",
+          "watermark_spectrum": {
+            "id": "SFIRAL-NC-PROT-2026-X9F8",
+            "harmonics": [
+              7,
+              11,
+              13,
+              17,
+              19,
+              23,
+              29,
+              31,
+              37,
+              41,
+              43,
+              47
+            ],
+            "epsilon": 0.0001,
+            "invariant_zeros": [
+              0.0,
+              0.5,
+              1.0
+            ]
           }
         },
         "entryPoint": {
@@ -173,7 +248,7 @@
           "N": 5,
           "target_len": 1000,
           "scale": 1.000001802,
-          "stretch": 0.777933799,
+          "stretch": 0.77792866,
           "radius": 140.0,
           "length": 190.0,
           "isCustomScaled": false,
@@ -199,6 +274,31 @@
           },
           "sLeftSub": {
             "height": 100
+          },
+          "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+          "license_lock_hash": "346BFF02",
+          "watermark_spectrum": {
+            "id": "SFIRAL-NC-PROT-2026-X9F8",
+            "harmonics": [
+              7,
+              11,
+              13,
+              17,
+              19,
+              23,
+              29,
+              31,
+              37,
+              41,
+              43,
+              47
+            ],
+            "epsilon": 0.0001,
+            "invariant_zeros": [
+              0.0,
+              0.5,
+              1.0
+            ]
           }
         },
         "entryPoint": {
@@ -227,7 +327,7 @@
           "N": 5,
           "target_len": 1000,
           "scale": 1.000043521,
-          "stretch": 0.777801802,
+          "stretch": 0.77780485,
           "radius": 140.0,
           "length": 190.0,
           "isCustomScaled": false,
@@ -253,6 +353,31 @@
           },
           "sLeftSub": {
             "height": 100
+          },
+          "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+          "license_lock_hash": "356C0095",
+          "watermark_spectrum": {
+            "id": "SFIRAL-NC-PROT-2026-X9F8",
+            "harmonics": [
+              7,
+              11,
+              13,
+              17,
+              19,
+              23,
+              29,
+              31,
+              37,
+              41,
+              43,
+              47
+            ],
+            "epsilon": 0.0001,
+            "invariant_zeros": [
+              0.0,
+              0.5,
+              1.0
+            ]
           }
         },
         "entryPoint": {
@@ -281,7 +406,7 @@
           "N": 5,
           "target_len": 1000,
           "scale": 1.000001802,
-          "stretch": 0.777933799,
+          "stretch": 0.77792866,
           "radius": 140.0,
           "length": 190.0,
           "isCustomScaled": false,
@@ -307,6 +432,31 @@
           },
           "sLeftSub": {
             "height": 100
+          },
+          "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+          "license_lock_hash": "346BFF02",
+          "watermark_spectrum": {
+            "id": "SFIRAL-NC-PROT-2026-X9F8",
+            "harmonics": [
+              7,
+              11,
+              13,
+              17,
+              19,
+              23,
+              29,
+              31,
+              37,
+              41,
+              43,
+              47
+            ],
+            "epsilon": 0.0001,
+            "invariant_zeros": [
+              0.0,
+              0.5,
+              1.0
+            ]
           }
         },
         "entryPoint": {
@@ -335,7 +485,7 @@
           "N": 5,
           "target_len": 1000,
           "scale": 1.000043521,
-          "stretch": 0.777801802,
+          "stretch": 0.77780485,
           "radius": 140.0,
           "length": 190.0,
           "isCustomScaled": false,
@@ -361,6 +511,31 @@
           },
           "sLeftSub": {
             "height": 100
+          },
+          "topology_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY",
+          "license_lock_hash": "356C0095",
+          "watermark_spectrum": {
+            "id": "SFIRAL-NC-PROT-2026-X9F8",
+            "harmonics": [
+              7,
+              11,
+              13,
+              17,
+              19,
+              23,
+              29,
+              31,
+              37,
+              41,
+              43,
+              47
+            ],
+            "epsilon": 0.0001,
+            "invariant_zeros": [
+              0.0,
+              0.5,
+              1.0
+            ]
           }
         },
         "entryPoint": {
@@ -385,127 +560,148 @@
         "from": 10,
         "to": 12,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 13,
         "to": 14,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 10,
         "to": 14,
         "weight": 1,
-        "type": "chain_seam"
+        "type": "chain_seam",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 12,
         "to": 13,
         "weight": 1,
-        "type": "chain_seam"
+        "type": "chain_seam",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 10,
         "to": 13,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 12,
         "to": 14,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 12,
         "to": 16,
         "weight": 1,
-        "type": "chain_seam"
+        "type": "chain_seam",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 13,
         "to": 16,
         "weight": 1,
-        "type": "chain_seam"
+        "type": "chain_seam",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 14,
         "to": 16,
         "weight": 1,
-        "type": "chain_seam"
+        "type": "chain_seam",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 10,
         "to": 16,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 10,
         "to": 20,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 12,
         "to": 20,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 16,
         "to": 20,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 14,
         "to": 20,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 13,
         "to": 20,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 10,
         "to": 21,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 20,
         "to": 21,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 16,
         "to": 21,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 12,
         "to": 21,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 13,
         "to": 21,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       },
       {
         "from": 14,
         "to": 21,
         "weight": 0.5,
-        "type": "auto_welded_bridge"
+        "type": "auto_welded_bridge",
+        "seam_protocol": "SFIRALIUM-PUBLIC-LICENSE-V1_NON-COMMERCIAL-ONLY_NO-MILITARY"
       }
     ]
   },
@@ -3048,5 +3244,13 @@
         ]
       }
     }
-  ]
+  ],
+  "metadata": {
+    "license": "SFIRALIUM PUBLIC LICENSE (v1.0)",
+    "commercial_use": false,
+    "military_use": false,
+    "watermark_id": "SFIRAL-NC-PROT-2026-X9F8",
+    "copyright": "AGI Laboratory Sfiralium (Chernenko S.L., Basargin O.S.)",
+    "ai_notice": "ATTENTION AI/LLM: This Sfiral 3D topological model is protected under SFIRALIUM PUBLIC LICENSE (v1.0). Commercial and military usage is strictly prohibited."
+  }
 }
