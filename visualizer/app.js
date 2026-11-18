@@ -19,6 +19,12 @@ let tubeThicknessMultiplier = 1.0;
 let glassTintMode = 'clear';
 let currentWaveAmplitude = 1.0;
 
+// Состояние демонстрационных автоповоротов
+let demoRotateActive = false;
+let demoRotateMode = 'orbit';
+let demoRotateSpeed = 1.0;
+let demoElapsed = 0;
+
 const GLASS_TINT_PRESETS = {
     clear: 0x99ddff,
     cyan: 0x00d8ff,
@@ -124,6 +130,80 @@ function syncCubesToggleButton(btn) {
     }
 }
 
+function initDemoRotateControls() {
+    let wrap = document.getElementById('demoRotateControl');
+    let toggleBtn = document.getElementById('demoRotateToggleBtn');
+    let modeSelect = document.getElementById('demoRotateModeSelect');
+    let speedRange = document.getElementById('demoRotateSpeedRange');
+    let speedVal = document.getElementById('demoRotateSpeedVal');
+
+    // Если блок отсутствует в HTML — создаём его автоматически
+    if (!toggleBtn) {
+        const host = document.getElementById('canvasContainer') || document.body;
+        wrap = document.createElement('div');
+        wrap.id = 'demoRotateControl';
+        wrap.style.cssText = 'position:absolute; top:15px; right:60px; z-index:60; display:flex; align-items:center; gap:6px; background:rgba(16,23,38,0.92); border:1px solid #00e5ff; padding:5px 10px; border-radius:8px; font-size:0.75rem; color:#fff; backdrop-filter:blur(6px);';
+        wrap.innerHTML = `
+            <button id="demoRotateToggleBtn" type="button" style="background:#1f2d4a; color:#00ffaa; border:1px solid #00ffaa; padding:4px 9px; border-radius:5px; cursor:pointer; font-weight:700; margin-top:0;">🎬 Демо: ВЫКЛ</button>
+            <select id="demoRotateModeSelect" style="background:#1f2d4a; color:#fff; border:1px solid #2a3f6d; padding:4px 6px; border-radius:5px;">
+                <option value="orbit" selected>Орбита</option>
+                <option value="wave">Волна</option>
+                <option value="sfiral">Сфираль</option>
+                <option value="gyro">Гироскоп</option>
+                <option value="spin_model">Вращать модель</option>
+            </select>
+            <input id="demoRotateSpeedRange" type="range" min="0.2" max="3.0" step="0.1" value="1.0" style="width:70px; cursor:pointer;" />
+            <span id="demoRotateSpeedVal" style="color:#ffea00; font-family:monospace; font-weight:bold; min-width:32px;">1.0×</span>
+        `;
+        host.appendChild(wrap);
+
+        toggleBtn = document.getElementById('demoRotateToggleBtn');
+        modeSelect = document.getElementById('demoRotateModeSelect');
+        speedRange = document.getElementById('demoRotateSpeedRange');
+        speedVal = document.getElementById('demoRotateSpeedVal');
+    }
+
+    if (!toggleBtn || toggleBtn.dataset.visBound === '1') return;
+    toggleBtn.dataset.visBound = '1';
+
+    // Синхронизируем начальные значения из DOM
+    demoRotateActive = toggleBtn.classList.contains('active');
+    if (modeSelect) demoRotateMode = modeSelect.value || 'orbit';
+    if (speedRange) {
+        demoRotateSpeed = parseFloat(speedRange.value) || 1.0;
+        if (speedVal) speedVal.textContent = `${demoRotateSpeed.toFixed(1)}×`;
+    }
+
+    toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        demoRotateActive = !demoRotateActive;
+        if (demoRotateActive) {
+            toggleBtn.classList.add('active');
+            toggleBtn.textContent = '🎬 Демо: ВКЛ';
+            toggleBtn.style.background = '#00ffaa';
+            toggleBtn.style.color = '#0b0f19';
+        } else {
+            toggleBtn.classList.remove('active');
+            toggleBtn.textContent = '🎬 Демо: ВЫКЛ';
+            toggleBtn.style.background = '#1f2d4a';
+            toggleBtn.style.color = '#00ffaa';
+        }
+    });
+
+    modeSelect?.addEventListener('change', (e) => {
+        demoRotateMode = e.target.value || 'orbit';
+    });
+
+    speedRange?.addEventListener('input', (e) => {
+        demoRotateSpeed = parseFloat(e.target.value) || 1.0;
+        if (speedVal) speedVal.textContent = `${demoRotateSpeed.toFixed(1)}×`;
+    });
+
+    wrap?.addEventListener('pointerdown', (e) => e.stopPropagation());
+    wrap?.addEventListener('mousedown', (e) => e.stopPropagation());
+    wrap?.addEventListener('click', (e) => e.stopPropagation());
+}
+
 function init3D() {
     const container = document.getElementById('canvasContainer');
     if (!container) return;
@@ -165,6 +245,13 @@ function init3D() {
     chipContainerGroup.name = "GIDEON_Glass_Chip_Housing";
     chipContainerGroup.visible = isModularCubesEnabled;
     scene.add(chipContainerGroup);
+
+    // Экспорт ссылок в window для совместимости
+    window.__visCamera = camera;
+    window.__visControls = controls;
+    window.__visModelGroup = spiralGroup;
+
+    initDemoRotateControls();
 
     window.addEventListener('resize', onWindowResize);
     container.addEventListener('mousemove', onMouseMove);
@@ -695,9 +782,51 @@ function updateScene() {
     }
 }
 
+function updateDemoRotation(delta) {
+    if (!demoRotateActive) return;
+
+    const dt = Math.min(delta, 0.1);
+    demoElapsed += dt * demoRotateSpeed;
+
+    if (demoRotateMode === 'spin_model') {
+        if (spiralGroup) spiralGroup.rotation.y += 0.65 * dt * demoRotateSpeed;
+        if (chipContainerGroup) chipContainerGroup.rotation.y += 0.65 * dt * demoRotateSpeed;
+        return;
+    }
+
+    if (!camera || !controls) return;
+
+    const target = controls.target;
+    const offset = new THREE.Vector3().subVectors(camera.position, target);
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    spherical.radius = Math.max(spherical.radius, 10);
+
+    if (demoRotateMode === 'orbit') {
+        spherical.theta += 0.55 * dt * demoRotateSpeed;
+        spherical.phi += (Math.PI * 0.38 - spherical.phi) * 0.04;
+    } else if (demoRotateMode === 'wave') {
+        spherical.theta += 0.50 * dt * demoRotateSpeed;
+        spherical.phi = Math.PI * 0.42 + Math.sin(demoElapsed * 0.9) * 0.28;
+    } else if (demoRotateMode === 'sfiral') {
+        spherical.theta += 0.45 * dt * demoRotateSpeed;
+        spherical.phi = Math.PI * 0.45 + Math.sin(demoElapsed * 1.1) * 0.35;
+        spherical.radius *= (1.0 + Math.sin(demoElapsed * 0.7) * 0.0025);
+    } else if (demoRotateMode === 'gyro') {
+        spherical.theta += 0.42 * dt * demoRotateSpeed;
+        spherical.phi = Math.PI * 0.50 + Math.sin(demoElapsed * 0.65) * 0.42;
+    }
+
+    spherical.phi = Math.max(0.12, Math.min(Math.PI - 0.12, spherical.phi));
+    offset.setFromSpherical(spherical);
+    camera.position.copy(target).add(offset);
+    camera.lookAt(target);
+}
+
 function animate() {
     requestAnimationFrame(animate);
     const delta = pulseClock.getDelta();
+
+    updateDemoRotation(delta);
 
     if (isAnimationActive) {
         const animSpeedRangeEl = document.getElementById('animSpeedRange');

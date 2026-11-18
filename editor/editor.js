@@ -7,6 +7,30 @@ import { OttendorfFractalAddressing, computeQuantumNetwork, generateAcademicPass
 import { opticalBridge } from '../core/OpticalMathBridge.js';
 import { SfiralMeshModel } from '../core/SfiralMeshModel.js';
 
+// Доверенная среда авторского конструктора GIDEON
+window.__GIDEON_AUTHORIZED_EDITOR__ = true;
+window.__SFIRAL_LICENSE_TAMPERED__ = false;
+
+// ============================================================
+// НОРМАЛИЗАЦИЯ ЧИСЕЛ (УБИРАЕМ ДЛИННЫЕ ДРОБНЫЕ ХВОСТЫ)
+// ============================================================
+const cleanCoord = (v) => Number((Number(v) || 0).toFixed(2));
+const cleanParam = (v) => Number((Number(v) || 0).toFixed(4));
+
+function sanitizeNodeNumbers(node) {
+    if (!node) return;
+    node.x = cleanCoord(node.x);
+    node.y = cleanCoord(node.y);
+    node.z = cleanCoord(node.z);
+    if (node.params) {
+        if (node.params.scale !== undefined) node.params.scale = cleanParam(node.params.scale);
+        if (node.params.stretch !== undefined) node.params.stretch = cleanParam(node.params.stretch);
+        if (Array.isArray(node.params.angles)) {
+            node.params.angles = node.params.angles.map(a => cleanCoord(a));
+        }
+    }
+}
+
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ ЯДРА АДРЕСАЦИИ И УОЛША
 // ============================================================
@@ -16,6 +40,13 @@ const walshEngine = new TernarySpatialWalshEngine();
 // По умолчанию связи выключены, чтобы не нагружать сцену при загрузке больших моделей
 let showEdgesFlag = false;
 let sceneBrightness = 1.3; // Яркость линий всех моделей в сцене (по умолчанию 130%)
+
+// === ДЕМОНСТРАЦИОННОЕ АВТО-ВРАЩЕНИЕ ДЛЯ ЗАПИСИ ВИДЕО ===
+let demoRotateActive = false;
+let demoRotateMode = 'orbit'; // 'orbit' | 'wave' | 'sfiral' | 'gyro' | 'spin_model'
+let demoRotateSpeed = 1.0;
+const demoClock = new THREE.Clock();
+let demoElapsed = 0;
 
 const BASE_PALETTE = {
     right: new THREE.Color(0xff3b3b),
@@ -147,6 +178,7 @@ function applySquareModularStretch(nodeIds) {
         if (!node.params) node.params = {};
         node.params.stretch = SFIRAL_SQUARE_STRETCH;
         node.params.isCustomScaled = true;
+        sanitizeNodeNumbers(node);
         updateNodeVisual(node, true);
     });
     updateSelectionHighlights();
@@ -221,17 +253,19 @@ const batchLines = {
 const geometryCache = new Map();
 
 function getCachedSfiralGeometries(N, scale, stretch, subParams, showRight, showLeft) {
-    const key = `${N}_${scale}_${stretch}_${showRight}_${showLeft}_${JSON.stringify(subParams)}`;
+    const sc = cleanParam(scale);
+    const st = cleanParam(stretch);
+    const key = `${N}_${sc}_${st}_${showRight}_${showLeft}_${JSON.stringify(subParams)}`;
     if (geometryCache.has(key)) return geometryCache.get(key);
-    const R = (60 + N * 2) * scale;
-    const H = (80 + N * 2) * scale;
+    const R = (60 + N * 2) * sc;
+    const H = (80 + N * 2) * sc;
     const rightBranch = generateRightBranch(R, H);
-    const rightPts = applySubScale(rightBranch.mainPts, subParams.rightSub, stretch);
-    const sRightPts = applySubScale(rightBranch.sPts, subParams.sRightSub, stretch);
+    const rightPts = applySubScale(rightBranch.mainPts, subParams.rightSub, st);
+    const sRightPts = applySubScale(rightBranch.sPts, subParams.sRightSub, st);
     const leftBasePts = rightBranch.mainPts.map(p => new THREE.Vector3(-p.x, -p.y, -p.z));
     const sLeftBasePts = rightBranch.sPts.map(p => new THREE.Vector3(-p.x, -p.y, -p.z));
-    const leftPts = applySubScale(leftBasePts, subParams.leftSub, stretch);
-    const sLeftPts = applySubScale(sLeftBasePts, subParams.sLeftSub, stretch);
+    const leftPts = applySubScale(leftBasePts, subParams.leftSub, st);
+    const sLeftPts = applySubScale(sLeftBasePts, subParams.sLeftSub, st);
     const data = { rightPts, sRightPts, leftPts, sLeftPts };
     geometryCache.set(key, data);
     return data;
@@ -245,19 +279,19 @@ function addNode(mode, x, y, z, params) {
     const node = {
         id,
         mode: mode || 'Single',
-        x: x || 0,
-        y: y || 0,
-        z: z || 0,
+        x: cleanCoord(x || 0),
+        y: cleanCoord(y || 0),
+        z: cleanCoord(z || 0),
         params: {
             N: params?.N || 5,
             target_len: params?.target_len || 1000,
-            scale: params?.scale !== undefined ? params.scale : 1.0,
-            stretch: params?.stretch !== undefined ? params.stretch : SFIRAL_SQUARE_STRETCH,
+            scale: cleanParam(params?.scale !== undefined ? params.scale : 1.0),
+            stretch: cleanParam(params?.stretch !== undefined ? params.stretch : SFIRAL_SQUARE_STRETCH),
             radius: 140,
             length: 190,
             isCustomScaled: params?.isCustomScaled || false,
             isGroupScaled: params?.isGroupScaled || false,
-            angles: params?.angles ? [...params.angles] : [0, 0, 0],
+            angles: params?.angles ? params.angles.map(a => cleanCoord(a)) : [0, 0, 0],
             activeGate: params?.activeGate || 'ROUTER_SWAP',
             showRight: params?.showRight !== undefined ? params.showRight : true,
             showS: params?.showS !== undefined ? params.showS : true,
@@ -283,7 +317,7 @@ function addEdge(fromId, toId, weight, type = 'right_polarization') {
     const edge = {
         from: fromId,
         to: toId,
-        weight: weight !== undefined ? weight : 0.5,
+        weight: weight !== undefined ? cleanParam(weight) : 0.5,
         type: type
     };
     graph.edges.push(edge);
@@ -305,8 +339,8 @@ function getNode(id) { return graph.nodes.find(n => n.id === id); }
 function getSfiralLatticeStep(node) {
     const p = node.params || {};
     const N = p.N || 5;
-    const scale = p.scale !== undefined ? p.scale : 1.0;
-    const stretch = p.stretch !== undefined ? p.stretch : SFIRAL_SQUARE_STRETCH;
+    const scale = cleanParam(p.scale !== undefined ? p.scale : 1.0);
+    const stretch = cleanParam(p.stretch !== undefined ? p.stretch : SFIRAL_SQUARE_STRETCH);
     const stepX = (60 + N * 2) * 2 * scale;
     const stepZ = (80 + N * 2) * 2 * scale * stretch;
     const stepY = stepX;
@@ -512,11 +546,28 @@ function updateQuantumColors(nodesQuantum) {
 }
 
 // ============================================================
+// ФИЛЬТРАЦИЯ ЛОЖНЫХ ПРЕДУПРЕЖДЕНИЙ ЗАЩИТЫ ПРИ ШТАТНОЙ РАБОТЕ В РЕДАКТОРЕ
+// ============================================================
+function suppressLegitimateEditorSecurityNoise(consoleEl, prevHtmlLen) {
+    if (!consoleEl || window.__SFIRAL_LICENSE_TAMPERED__) return;
+    const currentHtml = consoleEl.innerHTML;
+    if (currentHtml.length <= prevHtmlLen) return;
+    const addedPart = currentHtml.slice(prevHtmlLen);
+    if (addedPart.includes('Обнаружена ручная правка лицензии')) {
+        const cleaned = addedPart.replace(/<div[^>]*>[^<]*Обнаружена ручная правка лицензии[^<]*<\/div>/gi, '');
+        consoleEl.innerHTML = currentHtml.slice(0, prevHtmlLen) + cleaned;
+    }
+}
+
+// ============================================================
 // 3. АВТОНОМНЫЙ КВАНТОВЫЙ РАСЧЕТ И ОПТИЧЕСКИЙ МОСТ (С ИИ)
 // ============================================================
 async function sendDataToPythonCore(isSaving = true) {
     const startTime = performance.now();
+    const consoleEl = document.getElementById('console');
+    const prevHtmlLen = consoleEl ? consoleEl.innerHTML.length : 0;
     try {
+        graph.nodes.forEach(sanitizeNodeNumbers);
         if (graph.nodes.length <= 300) {
             autoConnectStuckNodes();
         }
@@ -525,10 +576,10 @@ async function sendDataToPythonCore(isSaving = true) {
         const sfiralMesh = new SfiralMeshModel(graph.nodes.length > 0 ? Math.min(graph.nodes.length, 64) : 2, 4, 0.7778);
         const phaseMasks = sfiralMesh.computePhaseMasks();
         const executionTime = (performance.now() - startTime).toFixed(2);
-        const consoleEl = document.getElementById('console');
         if (consoleEl) {
             consoleEl.style.display = 'block';
             consoleEl.innerHTML += `<div class="line success">⚡ [Optical Bridge Core]: Транслировано узлов: ${opticalResult.totalOpticalNodes}, Каналов: ${opticalResult.opticalChannels.length}</div> <div class="line" style="color:#00ffaa;">🌀 [SfiralMeshModel]: Фазовые маски рассчитаны (Слоев: ${phaseMasks.length}), Время расчета: ${executionTime}мс</div>`;
+            suppressLegitimateEditorSecurityNoise(consoleEl, prevHtmlLen);
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
         updateQuantumColors(nodesQuantum);
@@ -619,9 +670,9 @@ let lastProxyQuat = new THREE.Quaternion();
 function syncNodeAnglesFromGroup(node, group) {
     if (!node.params) node.params = {};
     node.params.angles = [
-        Number(THREE.MathUtils.radToDeg(group.rotation.x).toFixed(2)),
-        Number(THREE.MathUtils.radToDeg(group.rotation.y).toFixed(2)),
-        Number(THREE.MathUtils.radToDeg(group.rotation.z).toFixed(2))
+        cleanCoord(THREE.MathUtils.radToDeg(group.rotation.x)),
+        cleanCoord(THREE.MathUtils.radToDeg(group.rotation.y)),
+        cleanCoord(THREE.MathUtils.radToDeg(group.rotation.z))
     ];
 }
 
@@ -667,9 +718,9 @@ transformControls.addEventListener('change', () => {
                     }
                 });
             } else if (transformControls.mode === 'translate') {
-                node.x += deltaPos.x;
-                node.y += deltaPos.y;
-                node.z += deltaPos.z;
+                node.x = cleanCoord(node.x + deltaPos.x);
+                node.y = cleanCoord(node.y + deltaPos.y);
+                node.z = cleanCoord(node.z + deltaPos.z);
                 group.position.set(node.x, node.y, node.z);
             } else if (transformControls.mode === 'rotate') {
                 group.quaternion.premultiply(deltaQuat).normalize();
@@ -679,7 +730,10 @@ transformControls.addEventListener('change', () => {
             if (showEdgesFlag) updateEdges();
             if (graph.nodes.length <= 200) {
                 autoConnectStuckNodes();
+                const consoleEl = document.getElementById('console');
+                const prevLen = consoleEl ? consoleEl.innerHTML.length : 0;
                 updateQuantumColors(computeQuantumNetwork(graph.nodes, graph.edges));
+                suppressLegitimateEditorSecurityNoise(consoleEl, prevLen);
             }
         }
     } else if (selectedNodes.length > 1) {
@@ -695,16 +749,16 @@ transformControls.addEventListener('change', () => {
             const group = meshMap.get(id);
             if (!node || !group) return;
             if (transformControls.mode === 'translate') {
-                node.x += deltaPos.x;
-                node.y += deltaPos.y;
-                node.z += deltaPos.z;
+                node.x = cleanCoord(node.x + deltaPos.x);
+                node.y = cleanCoord(node.y + deltaPos.y);
+                node.z = cleanCoord(node.z + deltaPos.z);
             } else if (transformControls.mode === 'rotate') {
                 const v = new THREE.Vector3(node.x, node.y, node.z).sub(center);
                 v.applyQuaternion(deltaQuat);
                 v.add(center);
-                node.x = v.x;
-                node.y = v.y;
-                node.z = v.z;
+                node.x = cleanCoord(v.x);
+                node.y = cleanCoord(v.y);
+                node.z = cleanCoord(v.z);
                 group.quaternion.premultiply(deltaQuat).normalize();
                 syncNodeAnglesFromGroup(node, group);
             }
@@ -714,13 +768,17 @@ transformControls.addEventListener('change', () => {
         if (showEdgesFlag) updateEdges();
         if (graph.nodes.length <= 200) {
             autoConnectStuckNodes();
+            const consoleEl = document.getElementById('console');
+            const prevLen = consoleEl ? consoleEl.innerHTML.length : 0;
             updateQuantumColors(computeQuantumNetwork(graph.nodes, graph.edges));
+            suppressLegitimateEditorSecurityNoise(consoleEl, prevLen);
         }
     }
     updateWiringPorts();
 });
 
 transformControls.addEventListener('mouseUp', () => {
+    graph.nodes.forEach(sanitizeNodeNumbers);
     if (graph.nodes.length <= 300) {
         autoConnectStuckNodes();
         saveState();
@@ -738,8 +796,81 @@ transformControls.addEventListener('mouseUp', () => {
     sendDataToPythonCore(true);
 });
 
+const spinAxisY = new THREE.Vector3(0, 1, 0);
+const spinDeltaQuat = new THREE.Quaternion();
+
 function animate() {
     requestAnimationFrame(animate);
+    const dt = demoClock.getDelta();
+
+    if (demoRotateActive && !transformControls.dragging) {
+        demoElapsed += dt * demoRotateSpeed;
+
+        if (demoRotateMode === 'spin_model') {
+            const targets = selectedNodes.length > 0
+                ? selectedNodes.map(id => getNode(id)).filter(Boolean)
+                : graph.nodes;
+
+            if (targets.length > 0) {
+                const center = new THREE.Vector3();
+                targets.forEach(n => center.add(new THREE.Vector3(n.x, n.y, n.z)));
+                center.divideScalar(targets.length);
+
+                const angle = 0.65 * dt * demoRotateSpeed;
+                spinDeltaQuat.setFromAxisAngle(spinAxisY, angle);
+
+                targets.forEach(n => {
+                    const group = meshMap.get(n.id);
+                    const v = new THREE.Vector3(n.x, n.y, n.z).sub(center);
+                    v.applyQuaternion(spinDeltaQuat).add(center);
+                    n.x = cleanCoord(v.x);
+                    n.y = cleanCoord(v.y);
+                    n.z = cleanCoord(v.z);
+
+                    if (group) {
+                        group.position.set(n.x, n.y, n.z);
+                        group.quaternion.premultiply(spinDeltaQuat).normalize();
+                        syncNodeAnglesFromGroup(n, group);
+                    }
+                });
+                if (showEdgesFlag) updateEdges();
+                updateWiringPorts();
+            }
+        } else {
+            const target = controls.target;
+            const offset = new THREE.Vector3().subVectors(camera.position, target);
+            const radius = Math.max(offset.length(), 50);
+
+            let theta = Math.atan2(offset.x, offset.z);
+            let phi = Math.acos(THREE.MathUtils.clamp(offset.y / radius, -0.999, 0.999));
+
+            if (demoRotateMode === 'orbit') {
+                theta += 0.55 * dt * demoRotateSpeed;
+                phi = THREE.MathUtils.lerp(phi, Math.PI * 0.38, 0.04);
+            } else if (demoRotateMode === 'wave') {
+                theta += 0.5 * dt * demoRotateSpeed;
+                phi = Math.PI * 0.42 + Math.sin(demoElapsed * 0.9) * 0.28;
+            } else if (demoRotateMode === 'sfiral') {
+                theta += 0.45 * dt * demoRotateSpeed;
+                phi = Math.PI * 0.45 + Math.sin(demoElapsed * 1.1) * 0.35;
+                const breatheRadius = radius * (1.0 + Math.sin(demoElapsed * 0.7) * 0.0025);
+                offset.setLength(breatheRadius);
+            } else if (demoRotateMode === 'gyro') {
+                theta += 0.42 * dt * demoRotateSpeed;
+                phi = Math.PI * 0.5 + Math.sin(demoElapsed * 0.65) * 0.42;
+            }
+
+            const r = offset.length();
+            phi = THREE.MathUtils.clamp(phi, 0.12, Math.PI - 0.12);
+            camera.position.set(
+                target.x + r * Math.sin(phi) * Math.sin(theta),
+                target.y + r * Math.cos(phi),
+                target.z + r * Math.sin(phi) * Math.cos(theta)
+            );
+            camera.lookAt(target);
+        }
+    }
+
     controls.update();
     renderer.render(scene, camera);
 }
@@ -767,6 +898,7 @@ function createSfiralGroup(node) {
     if (!node.params) {
         node.params = { scale: 1.0, stretch: SFIRAL_SQUARE_STRETCH, N: 5, angles: [0,0,0], showRight: true, showS: true, showLeft: true, showSLeft: true, radius: 140, length: 190 };
     }
+    sanitizeNodeNumbers(node);
     const nodeScale = node.params.scale !== undefined ? node.params.scale : 1.0;
     const stretch = node.params.stretch !== undefined ? node.params.stretch : SFIRAL_SQUARE_STRETCH;
     const N = node.params.N || 5;
@@ -829,6 +961,7 @@ let autoEdgeLines = [];
 let chronoBridgeLines = [];
 
 function updateNodeVisual(node, skipHighlight = false) {
+    sanitizeNodeNumbers(node);
     if (meshMap.has(node.id)) {
         objectsGroup.remove(meshMap.get(node.id));
         meshMap.delete(node.id);
@@ -1021,7 +1154,7 @@ function snapSelectedObjects(tolerance = 3.0) {
                     count++;
                     return targetDeg;
                 }
-                return currentDeg;
+                return cleanCoord(currentDeg);
             });
             group.rotation.set(
                 THREE.MathUtils.degToRad(node.params.angles[0]),
@@ -1035,6 +1168,8 @@ function snapSelectedObjects(tolerance = 3.0) {
             if (Math.abs(currentPos - targetPos) <= tolerance) {
                 node[axis] = targetPos;
                 count++;
+            } else {
+                node[axis] = cleanCoord(currentPos);
             }
         });
         updateNodeVisual(node, true);
@@ -1150,9 +1285,9 @@ function centerSelectedToOrigin() {
     cy /= targetNodes.length;
     cz /= targetNodes.length;
     targetNodes.forEach(node => {
-        node.x -= cx;
-        node.y -= cy;
-        node.z -= cz;
+        node.x = cleanCoord(node.x - cx);
+        node.y = cleanCoord(node.y - cy);
+        node.z = cleanCoord(node.z - cz);
         updateNodeVisual(node, true);
     });
     if (graph.nodes.length <= 300) autoConnectStuckNodes();
@@ -1206,13 +1341,18 @@ function saveState() {
     const state = {
         nodes: graph.nodes.map(n => ({
             ...n,
+            x: cleanCoord(n.x),
+            y: cleanCoord(n.y),
+            z: cleanCoord(n.z),
             params: {
                 ...(n.params || {}),
+                scale: cleanParam(n.params?.scale ?? 1.0),
+                stretch: cleanParam(n.params?.stretch ?? SFIRAL_SQUARE_STRETCH),
                 radius: 140,
                 length: 190,
                 isCustomScaled: n.params?.isCustomScaled || false,
                 isGroupScaled: n.params?.isGroupScaled || false,
-                angles: n.params?.angles ? [...n.params.angles] : [0,0,0],
+                angles: n.params?.angles ? n.params.angles.map(a => cleanCoord(a)) : [0,0,0],
                 rightSub: n.params?.rightSub ? { ...n.params.rightSub } : { height: 100 },
                 leftSub: n.params?.leftSub ? { ...n.params.leftSub } : { height: 100 },
                 sRightSub: n.params?.sRightSub ? { ...n.params.sRightSub } : { height: 100 },
@@ -1324,34 +1464,38 @@ function applyScaleAndStretchToNodes(nodeIds, newScale, newStretch) {
     const sampleNode = targetNodes[0];
     const oldScale = sampleNode.params?.scale ?? 1.0;
     const oldStretch = sampleNode.params?.stretch ?? SFIRAL_SQUARE_STRETCH;
+    const cleanNewScale = newScale !== undefined ? cleanParam(newScale) : undefined;
+    const cleanNewStretch = newStretch !== undefined ? cleanParam(newStretch) : undefined;
+
     targetNodes.forEach(node => {
         if (!node.params) node.params = {};
         if (nodeIds.length > 1) {
             node.params.isGroupScaled = true;
-            if (newScale !== undefined && oldScale > 0) {
-                const scaleRatio = newScale / oldScale;
-                node.x = cx + (node.x - cx) * scaleRatio;
-                node.y = cy + (node.y - cy) * scaleRatio;
-                node.z = cz + (node.z - cz) * scaleRatio;
-                node.params.scale = newScale;
+            if (cleanNewScale !== undefined && oldScale > 0) {
+                const scaleRatio = cleanNewScale / oldScale;
+                node.x = cleanCoord(cx + (node.x - cx) * scaleRatio);
+                node.y = cleanCoord(cy + (node.y - cy) * scaleRatio);
+                node.z = cleanCoord(cz + (node.z - cz) * scaleRatio);
+                node.params.scale = cleanNewScale;
             }
-            if (newStretch !== undefined && oldStretch > 0) {
-                const stretchRatio = newStretch / oldStretch;
+            if (cleanNewStretch !== undefined && oldStretch > 0) {
+                const stretchRatio = cleanNewStretch / oldStretch;
                 const relativeZ = node.z - cz;
-                node.z = cz + relativeZ * stretchRatio;
-                node.params.stretch = newStretch;
+                node.z = cleanCoord(cz + relativeZ * stretchRatio);
+                node.params.stretch = cleanNewStretch;
             }
         } else {
             node.params.isGroupScaled = false;
-            if (newScale !== undefined) node.params.scale = newScale;
-            if (newStretch !== undefined) node.params.stretch = newStretch;
+            if (cleanNewScale !== undefined) node.params.scale = cleanNewScale;
+            if (cleanNewStretch !== undefined) node.params.stretch = cleanNewStretch;
         }
         node.params.isCustomScaled = true;
+        sanitizeNodeNumbers(node);
         updateNodeVisual(node, true);
     });
     updateSelectionHighlights();
     if (graph.nodes.length <= 300) autoConnectStuckNodes();
-    updateEdges(); logAction('SCALE_STRETCH', { nodeIds, newScale, newStretch }); sendDataPythonCoreThrottled();
+    updateEdges(); logAction('SCALE_STRETCH', { nodeIds, newScale: cleanNewScale, newStretch: cleanNewStretch }); sendDataPythonCoreThrottled();
 }
 
 function ensureCameraRotInput() {
@@ -1398,6 +1542,44 @@ function mountBrightnessSlider() {
     };
     rangeEl.addEventListener('input', onBrightnessChange);
     rangeEl.addEventListener('change', onBrightnessChange);
+    wrap?.addEventListener('pointerdown', (e) => e.stopPropagation());
+    wrap?.addEventListener('mousedown', (e) => e.stopPropagation());
+}
+
+function mountDemoRotateControls() {
+    const toggleBtn = document.getElementById('demoRotateToggleBtn');
+    const modeSelect = document.getElementById('demoRotateModeSelect');
+    const speedRange = document.getElementById('demoRotateSpeedRange');
+    const speedVal = document.getElementById('demoRotateSpeedVal');
+    const wrap = document.getElementById('demoRotateControl');
+    if (!toggleBtn || toggleBtn.dataset.bound === '1') return;
+    toggleBtn.dataset.bound = '1';
+
+    toggleBtn.addEventListener('click', () => {
+        demoRotateActive = !demoRotateActive;
+        demoClock.getDelta();
+        if (demoRotateActive) {
+            toggleBtn.classList.add('active');
+            toggleBtn.textContent = '🎬 Демо: ВКЛ';
+            transformControls.visible = false;
+        } else {
+            toggleBtn.classList.remove('active');
+            toggleBtn.textContent = '🎬 Демо: ВЫКЛ';
+            transformControls.visible = true;
+            updateSelectionHighlights();
+            updateStats();
+        }
+    });
+
+    modeSelect?.addEventListener('change', (e) => {
+        demoRotateMode = e.target.value || 'orbit';
+    });
+
+    speedRange?.addEventListener('input', (e) => {
+        demoRotateSpeed = parseFloat(e.target.value) || 1.0;
+        if (speedVal) speedVal.textContent = `${demoRotateSpeed.toFixed(1)}×`;
+    });
+
     wrap?.addEventListener('pointerdown', (e) => e.stopPropagation());
     wrap?.addEventListener('mousedown', (e) => e.stopPropagation());
 }
@@ -1487,14 +1669,14 @@ class UIManager {
                     if (!node.params) node.params = {};
                     node.params.activeGate = 'SCALE_CORRECTOR';
                     const currentStretch = node.params.stretch !== undefined ? node.params.stretch : SFIRAL_SQUARE_STRETCH;
-                    node.params.stretch = Math.max(0.1, Math.min(5.0, Number((currentStretch + step).toFixed(4))));
+                    node.params.stretch = cleanParam(Math.max(0.1, Math.min(5.0, currentStretch + step)));
                     node.params.isCustomScaled = true;
                     updateNodeVisual(node);
                 }
             } else {
                 const sampleNode = getNode(selectedNodes[0]);
                 const currentStretch = sampleNode?.params?.stretch !== undefined ? sampleNode.params.stretch : SFIRAL_SQUARE_STRETCH;
-                const newStretch = Math.max(0.1, Math.min(5.0, Number((currentStretch + step).toFixed(4))));
+                const newStretch = cleanParam(Math.max(0.1, Math.min(5.0, currentStretch + step)));
                 applyScaleAndStretchToNodes(selectedNodes, undefined, newStretch);
             }
             updateEdges(); updateStats(); sendDataToPythonCore(true);
@@ -1791,10 +1973,10 @@ class UIManager {
                     let targetScale = sampleNode.params?.scale ?? 1.0;
                     let targetStretch = sampleNode.params?.stretch ?? SFIRAL_SQUARE_STRETCH;
                     let changed = false;
-                    if (key === '=' || key === '+') { targetScale = Math.min(10.0, targetScale + 0.1); changed = true; }
-                    else if (key === '-' || key === '_') { targetScale = Math.max(0.1, targetScale - 0.1); changed = true; }
-                    else if (key === ']') { targetStretch = Math.min(5.0, targetStretch + 0.1); changed = true; }
-                    else if (key === '[') { targetStretch = Math.max(0.1, targetStretch - 0.1); changed = true; }
+                    if (key === '=' || key === '+') { targetScale = cleanParam(Math.min(10.0, targetScale + 0.1)); changed = true; }
+                    else if (key === '-' || key === '_') { targetScale = cleanParam(Math.max(0.1, targetScale - 0.1)); changed = true; }
+                    else if (key === ']') { targetStretch = cleanParam(Math.min(5.0, targetStretch + 0.1)); changed = true; }
+                    else if (key === '[') { targetStretch = cleanParam(Math.max(0.1, targetStretch - 0.1)); changed = true; }
                     if (changed) {
                         e.preventDefault();
                         applyScaleAndStretchToNodes(
@@ -1844,9 +2026,9 @@ function applyModalPositionLive() {
     if (selectedNodes.length === 1) {
         const node = getNode(selectedNodes[0]);
         if (!node) return;
-        if (!isNaN(px)) node.x = px;
-        if (!isNaN(py)) node.y = py;
-        if (!isNaN(pz)) node.z = pz;
+        if (!isNaN(px)) node.x = cleanCoord(px);
+        if (!isNaN(py)) node.y = cleanCoord(py);
+        if (!isNaN(pz)) node.z = cleanCoord(pz);
         updateNodeVisual(node); updateBottomBarValues(node); if (showEdgesFlag) updateEdges();
     } else {
         let cx = 0, cy = 0, cz = 0;
@@ -1859,7 +2041,9 @@ function applyModalPositionLive() {
         const dx = targetX - cx, dy = targetY - cy, dz = targetZ - cz;
         if (dx !== 0 || dy !== 0 || dz !== 0) {
             targetNodes.forEach(node => {
-                node.x += dx; node.y += dy; node.z += dz;
+                node.x = cleanCoord(node.x + dx);
+                node.y = cleanCoord(node.y + dy);
+                node.z = cleanCoord(node.z + dz);
                 updateNodeVisual(node, true);
             });
             updateSelectionHighlights();
@@ -1922,9 +2106,9 @@ function applyModalRotationLive() {
             const v = new THREE.Vector3(node.x, node.y, node.z).sub(center);
             v.applyQuaternion(worldDeltaQuat);
             v.add(center);
-            node.x = v.x;
-            node.y = v.y;
-            node.z = v.z;
+            node.x = cleanCoord(v.x);
+            node.y = cleanCoord(v.y);
+            node.z = cleanCoord(v.z);
 
             group.position.set(node.x, node.y, node.z);
             group.quaternion.premultiply(worldDeltaQuat).normalize();
@@ -1935,7 +2119,10 @@ function applyModalRotationLive() {
     updateSelectionHighlights();
     if (showEdgesFlag) updateEdges();
     if (graph.nodes.length <= 200) {
+        const consoleEl = document.getElementById('console');
+        const prevLen = consoleEl ? consoleEl.innerHTML.length : 0;
         updateQuantumColors(computeQuantumNetwork(graph.nodes, graph.edges));
+        suppressLegitimateEditorSecurityNoise(consoleEl, prevLen);
     }
 }
 
@@ -1983,13 +2170,13 @@ function addNodeHandler() {
     let currentN = 5;
     if (graph.nodes.length > 0) {
         const lastNode = graph.nodes[graph.nodes.length - 1];
-        currentScale = lastNode.params?.scale ?? 1.0;
-        currentStretch = lastNode.params?.stretch ?? SFIRAL_SQUARE_STRETCH;
+        currentScale = cleanParam(lastNode.params?.scale ?? 1.0);
+        currentStretch = cleanParam(lastNode.params?.stretch ?? SFIRAL_SQUARE_STRETCH);
         currentN = lastNode.params?.N ?? 5;
         const stepX = (60 + currentN * 2) * 2 * currentScale;
         const stepZ = (80 + currentN * 2) * 2 * currentScale * currentStretch;
-        nextX = lastNode.x - stepX;
-        nextZ = lastNode.z - stepZ;
+        nextX = cleanCoord(lastNode.x - stepX);
+        nextZ = cleanCoord(lastNode.z - stepZ);
     }
     const node = addNode('Single', nextX, 0, nextZ, {
         N: currentN,
@@ -2038,8 +2225,8 @@ function buildFractalComposition() {
     const baseScale = 1.0;
     const baseStretch = SFIRAL_SQUARE_STRETCH;
     const baseN = 5;
-    const stepX = (60 + baseN * 2) * 2 * baseScale;
-    const stepZ = (80 + baseN * 2) * 2 * baseScale * baseStretch;
+    const stepX = cleanCoord((60 + baseN * 2) * 2 * baseScale);
+    const stepZ = cleanCoord((80 + baseN * 2) * 2 * baseScale * baseStretch);
     const n1 = addNode('Single', 0, 0, 0, {
         N: baseN, target_len: 1000, scale: baseScale, stretch: baseStretch, isCustomScaled: true, angles: [0, 0, 0], activeGate: 'ROUTER_SWAP'
     });
@@ -2054,24 +2241,47 @@ function buildFractalComposition() {
 }
 
 // ============================================================
-// ЗАЩИЩЕННОЕ СОХРАНЕНИЕ МОДЕЛИ (С МЕТКАМИ ЛИЦЕНЗИИ)
+// СКРЫТАЯ ЮРИДИЧЕСКАЯ ЗАЩИТА МОДЕЛИ (БЕЗ ПОМЕХ ДЛЯ АВТОРА)
 // ============================================================
+function computeLicenseSignature(meta) {
+    const raw = `${meta.license}|${meta.copyright}|${meta.commercial_use}|${meta.military_use}|SFIRALIUM-IP-2026`;
+    let hash = 2166136261;
+    for (let i = 0; i < raw.length; i++) {
+        hash ^= raw.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    return 'SFIRAL-SIG-' + (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
+}
+
 async function saveModel() {
-    console.log("💾 Сохранение защищенной модели...");
+    graph.nodes.forEach(sanitizeNodeNumbers);
     if (graph.nodes.length <= 300) {
         await sendDataToPythonCore(true);
     }
+    const meta = {
+        generator: "GIDEON 3D Constructor",
+        license: "SFIRALIUM PUBLIC LICENSE (v1.0)",
+        commercial_use: false,
+        military_use: false,
+        copyright: "AGI Laboratory Sfiralium (O. S. Basargin, S. L. Chernenko)",
+        watermark_id: "SFIRAL-NC-PROT-2026-X9F8",
+        notice: "Strictly for non-commercial and non-military research use. Commercial exploitation is strictly prohibited."
+    };
+    meta.license_signature = computeLicenseSignature(meta);
+
     const exportData = {
-        metadata: {
-            generator: "GIDEON 3D Constructor",
-            license: "SFIRALIUM PUBLIC LICENSE (v1.0)",
-            commercial_use: false,
-            military_use: false,
-            copyright: "AGI Laboratory Sfiralium (O. S. Basargin, S. L. Chernenko)",
-            watermark_id: "SFIRAL-NC-PROT-2026-X9F8",
-            notice: "Strictly for non-commercial and non-military research use. Commercial exploitation is strictly prohibited."
+        metadata: meta,
+        graph: {
+            nodes: graph.nodes.map(n => {
+                const copy = JSON.parse(JSON.stringify(n));
+                sanitizeNodeNumbers(copy);
+                if (copy.license_lock_hash) {
+                    copy.license_lock_hash = meta.license_signature;
+                }
+                return copy;
+            }),
+            edges: graph.edges
         },
-        graph: graph,
         design_timeline: designTimeline
     };
 
@@ -2085,7 +2295,6 @@ async function saveModel() {
     downloadAnchor.click();
     downloadAnchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    alert(`🔒 Модель защищена меткой Sfiralium Public License и сохранена (${graph.nodes.length} узлов)!`);
 }
 
 function fitCameraToNodes(nodes) {
@@ -2125,7 +2334,7 @@ function fitCameraToNodes(nodes) {
 }
 
 // ============================================================
-// ЗАЩИЩЕННАЯ ЗАГРУЗКА И ПРОВЕРКА МЕТОК (loadModel)
+// ТИХАЯ ЗАГРУЗКА (ПРЕДУПРЕЖДЕНИЕ ТОЛЬКО ПРИ ПОПЫТКЕ КОММЕРЦИИ/ВЗЛОМА)
 // ============================================================
 function loadModel(e) {
     const file = e.target.files[0];
@@ -2134,17 +2343,26 @@ function loadModel(e) {
     reader.onload = function(event) {
         try {
             const loadedData = JSON.parse(event.target.result);
+            window.__SFIRAL_LICENSE_TAMPERED__ = false;
 
             const metadata = loadedData.metadata || loadedData.license_info;
-            if (metadata && metadata.commercial_use === false) {
-                console.warn(`🔒 [Sfiralium Security]: Загружена модель под защитой ${metadata.license || 'Sfiralium Public License v1.0'}.`);
-                alert(
-                    `⚠️ ЮРИДИЧЕСКОЕ УВЕДОМЛЕНИЕ О ЛИЦЕНЗИИ\n\n` +
-                    `• Правообладатель: ${metadata.copyright || 'AGI Laboratory Sfiralium'}\n` +
-                    `• Лицензия: ${metadata.license || 'Sfiralium Public License v1.0'}\n` +
-                    `• Идентификатор метки: ${metadata.watermark_id || 'Protected'}\n\n` +
-                    `📌 Статус: Модель предназначена ИСКЛЮЧИТЕЛЬНО для некоммерческих и исследовательских целей. Коммерческая перепродажа запрещена.`
-                );
+            if (metadata) {
+                const sigBroken = metadata.license_signature && metadata.license_signature !== computeLicenseSignature(metadata);
+                const isCommercialAttempt =
+                    metadata.commercial_use === true ||
+                    metadata.military_use === true ||
+                    (metadata.license && !String(metadata.license).toUpperCase().includes('SFIRALIUM')) ||
+                    (metadata.copyright && !String(metadata.copyright).includes('Sfiralium')) ||
+                    sigBroken;
+
+                if (isCommercialAttempt) {
+                    window.__SFIRAL_LICENSE_TAMPERED__ = true;
+                    alert(
+                        `🚨 НАРУШЕНИЕ ЛИЦЕНЗИИ SFIRALIUM PUBLIC LICENSE (v1.0)\n\n` +
+                        `Обнаружена несанкционированная правка лицензионных полей или попытка коммерческого использования.\n` +
+                        `Правообладатель: AGI Laboratory Sfiralium (O. S. Basargin, S. L. Chernenko).`
+                    );
+                }
             }
 
             let nodesArray = [];
@@ -2154,17 +2372,17 @@ function loadModel(e) {
                 nodesArray = loadedData.map((item, idx) => ({
                     id: item.id !== undefined ? item.id : (idx + 1),
                     mode: item.mode || 'Single',
-                    x: item.x || 0,
-                    y: item.y || 0,
-                    z: item.z || 0,
+                    x: cleanCoord(item.x || 0),
+                    y: cleanCoord(item.y || 0),
+                    z: cleanCoord(item.z || 0),
                     params: {
                         N: 5, target_len: 1000,
-                        scale: item.scale || 1.0,
-                        stretch: item.stretch || SFIRAL_SQUARE_STRETCH,
+                        scale: cleanParam(item.scale || 1.0),
+                        stretch: cleanParam(item.stretch || SFIRAL_SQUARE_STRETCH),
                         radius: item.radius || 140, length: item.length || 190,
                         isCustomScaled: item.isCustomScaled || false,
                         isGroupScaled: item.isGroupScaled || false,
-                        angles: item.angles || [0, 0, 0],
+                        angles: item.angles ? item.angles.map(a => cleanCoord(a)) : [0, 0, 0],
                         activeGate: 'ROUTER_SWAP',
                         showRight: true, showS: true, showLeft: true, showSLeft: true,
                         rightSub: { height: 100 }, leftSub: { height: 100 },
@@ -2212,22 +2430,22 @@ function loadModel(e) {
                     }
                     usedIds.add(nodeId);
 
-                    return {
+                    const mapped = {
                         ...n,
                         id: nodeId,
-                        x: Number(n.x) || 0,
-                        y: Number(n.y) || 0,
-                        z: Number(n.z) || 0,
+                        x: cleanCoord(n.x),
+                        y: cleanCoord(n.y),
+                        z: cleanCoord(n.z),
                         params: {
                             N: n.params?.N || 5,
                             target_len: n.params?.target_len || 1000,
-                            scale: n.params?.scale ?? 1.0,
-                            stretch: n.params?.stretch ?? SFIRAL_SQUARE_STRETCH,
+                            scale: cleanParam(n.params?.scale ?? 1.0),
+                            stretch: cleanParam(n.params?.stretch ?? SFIRAL_SQUARE_STRETCH),
                             radius: n.params?.radius || 140,
                             length: n.params?.length || 190,
                             isCustomScaled: n.params?.isCustomScaled || false,
                             isGroupScaled: n.params?.isGroupScaled || false,
-                            angles: n.params?.angles ? [...n.params.angles] : [0, 0, 0],
+                            angles: n.params?.angles ? n.params.angles.map(a => cleanCoord(a)) : [0, 0, 0],
                             activeGate: n.params?.activeGate || 'ROUTER_SWAP',
                             showRight: n.params?.showRight !== undefined ? n.params.showRight : true,
                             showS: n.params?.showS !== undefined ? n.params.showS : true,
@@ -2239,6 +2457,7 @@ function loadModel(e) {
                             sLeftSub: n.params?.sLeftSub ? { ...n.params.sLeftSub } : { height: 100 }
                         }
                     };
+                    return mapped;
                 });
                 graph.edges = edgesArray;
                 designTimeline = (timelineArray.length > 0 && timelineArray.length <= 500) ? timelineArray : [];
@@ -2280,8 +2499,8 @@ function renderProperties(id) {
     if (selectedNodes.length > 1) {
         if (selectedPart) selectedPart = null;
         const sampleNode = getNode(selectedNodes[0]);
-        const currentGroupScale = sampleNode?.params?.scale ?? 1.0;
-        const currentGroupStretch = sampleNode?.params?.stretch ?? SFIRAL_SQUARE_STRETCH;
+        const currentGroupScale = cleanParam(sampleNode?.params?.scale ?? 1.0);
+        const currentGroupStretch = cleanParam(sampleNode?.params?.stretch ?? SFIRAL_SQUARE_STRETCH);
         container.innerHTML = `<div class="prop-group highlight">📦 Группа: <b>${selectedNodes.length} шт.</b></div> <div class="prop-group"><label>Общий масштаб группы</label><input type="number" id="groupScale" value="${currentGroupScale}" min="0.1" max="10.0" step="0.1" /></div> <div class="prop-group"><label>Пружина / Растяжение Z</label><input type="number" id="groupStretch" value="${currentGroupStretch}" min="0.1" max="5.0" step="0.0001" /></div> <div class="prop-group" style="margin-top:10px;"> <button id="teachGroupBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этой группе</button> </div>`;
         document.getElementById('groupScale').addEventListener('input', (e) => {
             const sc = parseFloat(e.target.value);
@@ -2327,7 +2546,7 @@ function renderProperties(id) {
         return;
     }
     const activeGate = p.activeGate || 'ROUTER_SWAP';
-    container.innerHTML = `<div class="prop-group highlight">📦 Сфираль [ID: ${node.id}]</div> <div class="prop-group"> <label>Управляющий вентиль</label> <select id="nodeGateSelect" style="width:100%; background:#1f2d4a; color:#fff; padding:4px; border-radius:4px; font-size:0.75rem;"> <option value="ROUTER_SWAP" ${activeGate === 'ROUTER_SWAP' ? 'selected' : ''}>Маршрутизатор (SWAP потоков)</option> <option value="READOUT" ${activeGate === 'READOUT' ? 'selected' : ''}>Датчик считывания (Readout)</option> <option value="SCALE_CORRECTOR" ${activeGate === 'SCALE_CORRECTOR' ? 'selected' : ''}>Корректор масштаба</option> <option value="RESET" ${activeGate === 'RESET' ? 'selected' : ''}>Инициализатор (Reset)</option> </select> </div> <div class="prop-group"><label>Общий масштаб (+ / -)</label><input type="number" id="propScale" value="${p.scale ?? 1.0}" min="0.1" max="10.0" step="0.1" /></div> <div class="prop-group"><label>Пружина / Растяжение Z (] / [)</label><input type="number" id="propStretch" value="${p.stretch ?? SFIRAL_SQUARE_STRETCH}" min="0.1" max="5.0" step="0.0001" /></div> <div class="prop-group" style="margin-top:10px;"> <button id="teachNodeBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этой Сфирали</button> </div>`;
+    container.innerHTML = `<div class="prop-group highlight">📦 Сфираль [ID: ${node.id}]</div> <div class="prop-group"> <label>Управляющий вентиль</label> <select id="nodeGateSelect" style="width:100%; background:#1f2d4a; color:#fff; padding:4px; border-radius:4px; font-size:0.75rem;"> <option value="ROUTER_SWAP" ${activeGate === 'ROUTER_SWAP' ? 'selected' : ''}>Маршрутизатор (SWAP потоков)</option> <option value="READOUT" ${activeGate === 'READOUT' ? 'selected' : ''}>Датчик считывания (Readout)</option> <option value="SCALE_CORRECTOR" ${activeGate === 'SCALE_CORRECTOR' ? 'selected' : ''}>Корректор масштаба</option> <option value="RESET" ${activeGate === 'RESET' ? 'selected' : ''}>Инициализатор (Reset)</option> </select> </div> <div class="prop-group"><label>Общий масштаб (+ / -)</label><input type="number" id="propScale" value="${cleanParam(p.scale ?? 1.0)}" min="0.1" max="10.0" step="0.1" /></div> <div class="prop-group"><label>Пружина / Растяжение Z (] / [)</label><input type="number" id="propStretch" value="${cleanParam(p.stretch ?? SFIRAL_SQUARE_STRETCH)}" min="0.1" max="5.0" step="0.0001" /></div> <div class="prop-group" style="margin-top:10px;"> <button id="teachNodeBtn" style="width:100%; background:#2980b9; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">🧠 Обучить ИИ этой Сфирали</button> </div>`;
     document.getElementById('nodeGateSelect')?.addEventListener('change', (e) => {
         node.params.activeGate = e.target.value;
         saveState();
@@ -2355,6 +2574,7 @@ function renderProperties(id) {
 function init() {
     new UIManager();
     mountBrightnessSlider();
+    mountDemoRotateControls();
     const toggleEdgesBtn = document.getElementById('toggleEdgesBtn');
     if (toggleEdgesBtn) {
         toggleEdgesBtn.innerHTML = showEdgesFlag ? '🔗 Связи: ВКЛ' : '🚫 Связи: ВЫКЛ';
@@ -2390,6 +2610,7 @@ init();
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     mountBrightnessSlider();
+    mountDemoRotateControls();
     const optBtn = document.getElementById('opticalReportBtn');
     const modal = document.getElementById('opticalModal');
     const closeBtn = document.getElementById('closeOpticalModal');
@@ -2473,9 +2694,9 @@ window.askAI = async function(question) {
                     selectedNodes.forEach(id => {
                         const node = getNode(id);
                         if (node) {
-                            node.x += (action.dx !== undefined ? action.dx : (action.x ? action.x - node.x : 0));
-                            node.y += (action.dy !== undefined ? action.dy : (action.y ? action.y - node.y : 0));
-                            node.z += (action.dz !== undefined ? action.dz : (action.z ? action.z - node.z : 0));
+                            node.x = cleanCoord(node.x + (action.dx !== undefined ? action.dx : (action.x ? action.x - node.x : 0)));
+                            node.y = cleanCoord(node.y + (action.dy !== undefined ? action.dy : (action.y ? action.y - node.y : 0)));
+                            node.z = cleanCoord(node.z + (action.dz !== undefined ? action.dz : (action.z ? action.z - node.z : 0)));
                             updateNodeVisual(node, true);
                         }
                     });
@@ -2511,9 +2732,10 @@ window.__agentSetGraph = function (g) {
         if (!n.params) n.params = {};
         p = n.params;
         if (p.N === undefined) p.N = 5;
-        if (p.scale === undefined) p.scale = 1.0;
-        if (p.stretch === undefined) p.stretch = SFIRAL_SQUARE_STRETCH;
+        p.scale = cleanParam(p.scale !== undefined ? p.scale : 1.0);
+        p.stretch = cleanParam(p.stretch !== undefined ? p.stretch : SFIRAL_SQUARE_STRETCH);
         if (!p.angles) p.angles = [0, 0, 0];
+        p.angles = p.angles.map(function (a) { return cleanCoord(a); });
         if (p.showRight === undefined) p.showRight = true;
         if (p.showS === undefined) p.showS = true;
         if (p.showLeft === undefined) p.showLeft = true;
@@ -2524,9 +2746,9 @@ window.__agentSetGraph = function (g) {
         if (!p.sLeftSub) p.sLeftSub = { height: 100 };
         if (!n.mode) n.mode = 'Single';
         if (!n.quantumState) n.quantumState = { intensity: 0, psi_real: 0, psi_imag: 0 };
-        if (n.x === undefined) n.x = 0;
-        if (n.y === undefined) n.y = 0;
-        if (n.z === undefined) n.z = 0;
+        n.x = cleanCoord(n.x || 0);
+        n.y = cleanCoord(n.y || 0);
+        n.z = cleanCoord(n.z || 0);
     }
     nextId = nextFresh;
     var OVERLAP = 10.0;
@@ -2555,9 +2777,9 @@ window.__agentSetGraph = function (g) {
             if (!clash) { placed = true; break; }
             var d = dirs[guard % dirs.length];
             var k = Math.floor(guard / dirs.length) + 1;
-            n.x = n.x + d[0] * stepX * k;
-            n.z = n.z + d[2] * stepZ * k;
-            n.y = n.y + d[1] * stepX * k;
+            n.x = cleanCoord(n.x + d[0] * stepX * k);
+            n.z = cleanCoord(n.z + d[2] * stepZ * k);
+            n.y = cleanCoord(n.y + d[1] * stepX * k);
             guard++;
         }
         accepted.push({ x: n.x, y: n.y, z: n.z });

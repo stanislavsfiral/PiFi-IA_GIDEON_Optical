@@ -93,6 +93,59 @@
             appearance: auto;
         }
 
+        /* Панель демонстрационных автоповоротов поверх 3D-холста */
+        #demoRotateControl {
+            position: absolute;
+            top: 15px;
+            right: 60px;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 23, 38, 0.92);
+            border: 1px solid #00e5ff;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: #fff;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        #demoRotateToggleBtn {
+            background: #1f2d4a;
+            color: #00ffaa;
+            border: 1px solid #00ffaa;
+            padding: 4px 9px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.75rem;
+            margin-top: 0;
+        }
+        #demoRotateToggleBtn.active {
+            background: #00ffaa;
+            color: #0b0f19;
+        }
+        #demoRotateModeSelect {
+            background: #1f2d4a;
+            color: #fff;
+            border: 1px solid #2a3f6d;
+            padding: 4px 6px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+        }
+        #demoRotateSpeedRange {
+            width: 70px;
+            cursor: pointer;
+            accent-color: #00ffaa;
+        }
+        #demoRotateSpeedVal {
+            color: #ffea00;
+            font-family: monospace;
+            font-weight: bold;
+            min-width: 32px;
+        }
+
         /* Стили для интерактивного Тултипа узлов */
         #nodeTooltip {
             position: absolute; display: none; background: rgba(13, 18, 29, 0.95);
@@ -196,6 +249,13 @@
             header { padding: 8px 12px; }
             h1 { font-size: 0.95rem; }
             .subtitle { display: none; }
+            #demoRotateControl {
+                top: 10px;
+                left: 10px;
+                right: 54px;
+                flex-wrap: wrap;
+                padding: 4px 6px;
+            }
         }
     </style>
 </head>
@@ -306,6 +366,20 @@
         <div class="workspace">
             <div class="canvas-container" id="canvasContainer">
                 <canvas id="renderCanvas"></canvas>
+
+                <!-- ПАНЕЛЬ ДЕМОНСТРАЦИОННОГО АВТО-ВРАЩЕНИЯ -->
+                <div id="demoRotateControl" title="Автоматический облёт камеры или вращение модели для записи видео">
+                    <button id="demoRotateToggleBtn" type="button">🎬 Демо: ВЫКЛ</button>
+                    <select id="demoRotateModeSelect" title="Траектория вращения">
+                        <option value="orbit" selected>Орбита</option>
+                        <option value="wave">Волна</option>
+                        <option value="sfiral">Сфираль</option>
+                        <option value="gyro">Гироскоп</option>
+                        <option value="spin_model">Вращать модель</option>
+                    </select>
+                    <input type="range" id="demoRotateSpeedRange" min="0.2" max="3.0" step="0.1" value="1.0" title="Скорость автоповорота">
+                    <span id="demoRotateSpeedVal">1.0×</span>
+                </div>
                 
                 <div id="nodeTooltip">
                     <div class="tooltip-row">Узел: <span class="tooltip-val" id="ttNodeId">N/A</span></div>
@@ -338,8 +412,9 @@
                             </div>
 
                             <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(0,229,255,0.05); border-left: 2px solid #00e5ff; border-radius: 4px;">
-                                <h3 style="color: #00e5ff; margin-bottom: 6px; font-size: 0.95rem;">👁️ Навигация в 3D-пространстве</h3>
+                                <h3 style="color: #00e5ff; margin-bottom: 6px; font-size: 0.95rem;">👁️ Навигация и Демо-автоповороты</h3>
                                 <p>
+                                    • <b>Демо (ВКЛ / ВЫКЛ):</b> Плавное автоматическое вращение камеры (<i>Орбита, Волна, Сфираль, Гироскоп</i>) или самой модели вокруг своей оси.<br>
                                     • <b>Вращение камеры:</b> Зажмите Левую кнопку мыши (ЛКМ) / Один палец на экране.<br>
                                     • <b>Смещение (Пан):</b> Зажмите Правую кнопку мыши (ПКМ) / Два пальца на экране.<br>
                                     • <b>Масштаб (Зум):</b> Колесико мыши / Жест «щипок».
@@ -549,6 +624,102 @@
                 if (inp && inp.value.trim()) { window.askAI(inp.value.trim()); inp.value = ''; }
             }
         });
+    </script>
+
+    <!-- АВТОНОМНЫЙ КОНТРОЛЛЕР ДЕМО-АВТОПОВОРОТОВ ДЛЯ ВИЗУАЛИЗАТОРА -->
+    <script>
+        (function initVisualizerDemoRotate() {
+            const wrap = document.getElementById('demoRotateControl');
+            const toggleBtn = document.getElementById('demoRotateToggleBtn');
+            const modeSelect = document.getElementById('demoRotateModeSelect');
+            const speedRange = document.getElementById('demoRotateSpeedRange');
+            const speedVal = document.getElementById('demoRotateSpeedVal');
+            if (!toggleBtn) return;
+
+            let active = false;
+            let mode = 'orbit';
+            let speed = 1.0;
+            let elapsed = 0;
+            let lastTime = performance.now();
+
+            toggleBtn.addEventListener('click', () => {
+                active = !active;
+                lastTime = performance.now();
+                if (active) {
+                    toggleBtn.classList.add('active');
+                    toggleBtn.textContent = '🎬 Демо: ВКЛ';
+                } else {
+                    toggleBtn.classList.remove('active');
+                    toggleBtn.textContent = '🎬 Демо: ВЫКЛ';
+                }
+            });
+
+            modeSelect?.addEventListener('change', (e) => {
+                mode = e.target.value || 'orbit';
+            });
+
+            speedRange?.addEventListener('input', (e) => {
+                speed = parseFloat(e.target.value) || 1.0;
+                if (speedVal) speedVal.textContent = `${speed.toFixed(1)}×`;
+            });
+
+            wrap?.addEventListener('pointerdown', (e) => e.stopPropagation());
+            wrap?.addEventListener('mousedown', (e) => e.stopPropagation());
+
+            function tick(now) {
+                requestAnimationFrame(tick);
+                const dt = Math.min((now - lastTime) / 1000, 0.1);
+                lastTime = now;
+                if (!active) return;
+
+                elapsed += dt * speed;
+                const cam = window.camera || window.__visCamera;
+                const ctrls = window.controls || window.__visControls;
+                const rootGroup = window.sfiralGroup || window.modelGroup || window.__visModelGroup;
+
+                if (mode === 'spin_model' && rootGroup) {
+                    rootGroup.rotation.y += 0.65 * dt * speed;
+                    return;
+                }
+
+                if (cam) {
+                    const target = ctrls?.target || { x: 0, y: 0, z: 0 };
+                    const ox = cam.position.x - target.x;
+                    const oy = cam.position.y - target.y;
+                    const oz = cam.position.z - target.z;
+                    let r = Math.max(Math.sqrt(ox * ox + oy * oy + oz * oz), 1);
+
+                    let theta = Math.atan2(ox, oz);
+                    let phi = Math.acos(Math.max(-0.999, Math.min(0.999, oy / r)));
+
+                    if (mode === 'orbit') {
+                        theta += 0.55 * dt * speed;
+                        phi += (Math.PI * 0.38 - phi) * 0.04;
+                    } else if (mode === 'wave') {
+                        theta += 0.5 * dt * speed;
+                        phi = Math.PI * 0.42 + Math.sin(elapsed * 0.9) * 0.28;
+                    } else if (mode === 'sfiral') {
+                        theta += 0.45 * dt * speed;
+                        phi = Math.PI * 0.45 + Math.sin(elapsed * 1.1) * 0.35;
+                        r *= (1.0 + Math.sin(elapsed * 0.7) * 0.0025);
+                    } else if (mode === 'gyro') {
+                        theta += 0.42 * dt * speed;
+                        phi = Math.PI * 0.5 + Math.sin(elapsed * 0.65) * 0.42;
+                    }
+
+                    phi = Math.max(0.12, Math.min(Math.PI - 0.12, phi));
+                    cam.position.set(
+                        target.x + r * Math.sin(phi) * Math.sin(theta),
+                        target.y + r * Math.cos(phi),
+                        target.z + r * Math.sin(phi) * Math.cos(theta)
+                    );
+                    cam.lookAt(target.x, target.y, target.z);
+                    if (ctrls && typeof ctrls.update === 'function') ctrls.update();
+                }
+            }
+
+            requestAnimationFrame(tick);
+        })();
     </script>
 
     <script type="module" src="./visualizer/app.js"></script>

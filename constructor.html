@@ -27,6 +27,29 @@
         #sceneBrightnessControl input[type="range"] {
             width: 90px; accent-color: #00e5ff; cursor: pointer; pointer-events: auto;
         }
+        #demoRotateControl {
+            position: absolute; top: 60px; left: 375px; z-index: 55;
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(16, 23, 38, 0.92);
+            border: 1px solid #00e5ff; padding: 4px 10px; border-radius: 6px;
+            backdrop-filter: blur(4px); pointer-events: auto;
+        }
+        #demoRotateToggleBtn {
+            background: #1f2d4a; color: #00ffaa;
+            border: 1px solid #00ffaa; padding: 3px 8px; border-radius: 4px;
+            font-size: 0.72rem; font-weight: bold; cursor: pointer;
+        }
+        #demoRotateToggleBtn.active {
+            background: #00ffaa; color: #0b0f19;
+            box-shadow: 0 0 10px rgba(0,255,170,0.45);
+        }
+        #demoRotateModeSelect {
+            background: #101726; color: #fff; border: 1px solid #2a3f6d;
+            padding: 3px 6px; border-radius: 4px; font-size: 0.72rem; outline: none;
+        }
+        #demoRotateSpeedRange {
+            width: 75px; accent-color: #00ffaa; cursor: pointer;
+        }
         .help-trigger-btn {
             position: absolute; top: 60px; right: 12px; z-index: 50;
             background: rgba(16,23,38,0.9); color: #00e5ff;
@@ -184,6 +207,19 @@
             <span id="sceneBrightnessVal" style="font-size:0.72rem; color:#00e5ff; min-width:36px; font-weight:bold; user-select:none;">130%</span>
         </div>
 
+        <div id="demoRotateControl" title="Демонстрационное авто-вращение для записи видео">
+            <button id="demoRotateToggleBtn">🎬 Демо: ВЫКЛ</button>
+            <select id="demoRotateModeSelect" title="Траектория вращения">
+                <option value="orbit" selected>Облёт: По кольцу</option>
+                <option value="wave">Облёт: Волновой</option>
+                <option value="sfiral">Облёт: Сфираль</option>
+                <option value="gyro">Облёт: Гироскоп</option>
+                <option value="spin_model">Сборка: Вокруг оси Y</option>
+            </select>
+            <input type="range" id="demoRotateSpeedRange" min="0.2" max="3.0" step="0.1" value="1.0" title="Скорость вращения" />
+            <span id="demoRotateSpeedVal" style="font-size:0.7rem; color:#00ffaa; min-width:30px; font-family:monospace; user-select:none;">1.0×</span>
+        </div>
+
         <div class="ai-floating-box">
             <input type="text" id="aiQueryInput" placeholder="Спросить ИИ-агента..." />
             <button id="askAiBtn" title="Запрос ИИ">🧠 Спросить</button>
@@ -283,7 +319,7 @@
                 <div class="help-modal-body" style="font-size:0.85rem; line-height:1.4;">
                     <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(0,229,255,0.05); border-left: 2px solid #00e5ff; border-radius: 4px;">
                         <h3 style="color: #00e5ff; margin-bottom: 6px; font-size: 0.95rem;">🛠️ Навигация и Выделение</h3>
-                        <p>• <b>Вращение камеры:</b> ЛКМ + тянуть.<br>• <b>Смещение:</b> ПКМ + тянуть.<br>• <b>Зум:</b> Колесико мыши.</p>
+                        <p>• <b>Вращение камеры:</b> ЛКМ + тянуть.<br>• <b>Смещение:</b> ПКМ + тянуть.<br>• <b>Зум:</b> Колесико мыши.<br>• <b>🎬 Демо:</b> автоматический облёт или вращение модели вокруг оси Y для записи видео.</p>
                     </div>
                     <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(0,255,170,0.05); border-left: 2px solid #00ffaa; border-radius: 4px;">
                         <h3 style="color: #00ffaa; margin-bottom: 6px; font-size: 0.95rem;">🧹 Топология, Нейроядро и Агент</h3>
@@ -326,9 +362,6 @@
         epsilon: 1e-4
     };
 
-    // 1. Вшивание водяного знака прямо в параметрическую кривую Сфирали.
-    // Огибающая sin^2(2*PI*t) строго обнуляет смещение на портах (t=0, t=1) и в центре S-перехода (t=0.5),
-    // сохраняя стыковку (SNAP), C2-гладкость и нулевую хиральность целого.
     window.applySfiralGeometricWatermark = function(t, baseRadius, watermarkId = window.SFIRAL_LICENSE_CONFIG.watermarkId) {
         const signatureText = `LICENSE:NO-COMMERCIAL|${watermarkId}`;
         const asciiBits = [];
@@ -348,7 +381,6 @@
         return baseRadius + (window.SFIRAL_LICENSE_CONFIG.epsilon * baseRadius * envelope * wave) / harmonics.length;
     };
 
-    // 2. Сцепка параметров узла (stretch и протокола) с лицензией (защита от правки в Блокноте)
     window.bindLicenseToNodeGeometry = function(node) {
         if (!node || !node.params) return node;
         const p = node.params;
@@ -376,7 +408,6 @@
         return node;
     };
 
-    // 3. Полная защита экспортируемого JSON-графа (метаданные + узлы + связи)
     window.protectSfiralGraphPayload = function(data) {
         if (!data || typeof data !== 'object' || !data.graph || !Array.isArray(data.graph.nodes)) {
             return data;
@@ -400,7 +431,6 @@
         return data;
     };
 
-    // 4. Проверка целостности лицензии при импорте файла
     window.verifySfiralGraphIntegrity = function(data) {
         if (!data || !data.graph || !Array.isArray(data.graph.nodes)) {
             return { valid: false, reason: "Некорректная структура графа Сфиралей" };
@@ -449,7 +479,6 @@
         };
     };
 
-    // Автоматический перехват сохранения JSON (Blob) для вшивания защиты в экспортируемые модели
     (function() {
         const OriginalBlob = window.Blob;
         window.Blob = function(blobParts, options) {
@@ -462,15 +491,12 @@
                         return new OriginalBlob([JSON.stringify(protectedObj, null, 2)], options);
                     }
                 }
-            } catch (e) {
-                // В случае нестандартного Blob сохраняем без изменений
-            }
+            } catch (e) {}
             return new OriginalBlob(blobParts, options);
         };
         window.Blob.prototype = OriginalBlob.prototype;
     })();
 
-    // Проверка файла при загрузке через #fileInput
     document.getElementById('fileInput')?.addEventListener('change', function(e) {
         const file = e.target?.files?.[0];
         if (!file) return;
@@ -493,7 +519,6 @@
         };
         reader.readAsText(file);
     }, true);
-    // === END SFIRALIUM LICENSE PROTECTION MODULE ===
 
     window.askAI = async function(question) {
         let logEl = document.getElementById('console');
@@ -521,7 +546,6 @@
         }
     };
 
-    // === PATCH: neurocore — функция ядра живёт ЗДЕСЬ, editor.js не трогаем ===
     window.runNeurocoreAnalysis = async function() {
         const logEl = document.getElementById('console');
         const say = (msg, color) => {
@@ -553,13 +577,11 @@
             say('❌ [Нейроядро]: сервер недоступен. Запусти: py sfiral_server.py', '#ff6666');
         }
     };
-    // === END PATCH ===
 
     document.getElementById('neurocoreBtn')?.addEventListener('click', () => {
         window.runNeurocoreAnalysis();
     });
 
-    // === PATCH: agent — 🤖 Обучение. Хук __agentSetGraph ЖИВЁТ В editor.js, не здесь ===
     window.runAgentDemo = async function() {
         const logEl = document.getElementById('console');
         const say = (msg, color) => {
@@ -615,7 +637,6 @@
             say('❌ [Агент]: сервер недоступен. Запусти: py sfiral_server.py', '#ff6666');
         }
     };
-    // === END PATCH ===
 
     document.getElementById('agentBtn')?.addEventListener('click', () => {
         window.runAgentDemo();
@@ -704,7 +725,6 @@
         }
     });
 
-    // === PATCH: сворачивание консоли ===
     (function () {
         const con = document.getElementById('console');
         const btn = document.getElementById('consoleToggleBtn');
@@ -717,7 +737,114 @@
             btn.textContent = collapsed ? '▴ Показать текст' : '▾ Свернуть текст';
         });
     })();
-    // === END PATCH ===
+</script>
+
+<!-- АВТОНОМНЫЙ КОНТРОЛЛЕР ДЕМО-АВТОПОВОРОТОВ ДЛЯ КОНСТРУКТОРА -->
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+    let capturedCamera = null;
+    let capturedControls = null;
+    let capturedScene = null;
+
+    const origOrbitUpdate = OrbitControls.prototype.update;
+    OrbitControls.prototype.update = function(...args) {
+        capturedControls = this;
+        capturedCamera = this.object;
+        return origOrbitUpdate.apply(this, args);
+    };
+
+    const origRender = THREE.WebGLRenderer.prototype.render;
+    THREE.WebGLRenderer.prototype.render = function(scene, camera, ...rest) {
+        if (scene && scene.isScene) capturedScene = scene;
+        if (camera && camera.isCamera) capturedCamera = camera;
+        return origRender.call(this, scene, camera, ...rest);
+    };
+
+    const wrap = document.getElementById('demoRotateControl');
+    const toggleBtn = document.getElementById('demoRotateToggleBtn');
+    const modeSelect = document.getElementById('demoRotateModeSelect');
+    const speedRange = document.getElementById('demoRotateSpeedRange');
+    const speedVal = document.getElementById('demoRotateSpeedVal');
+
+    let active = false;
+    let mode = modeSelect ? modeSelect.value : 'orbit';
+    let speed = speedRange ? (parseFloat(speedRange.value) || 1.0) : 1.0;
+    let elapsed = 0;
+    let lastTime = performance.now();
+
+    toggleBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        active = !active;
+        lastTime = performance.now();
+        if (active) {
+            toggleBtn.classList.add('active');
+            toggleBtn.textContent = '🎬 Демо: ВКЛ';
+        } else {
+            toggleBtn.classList.remove('active');
+            toggleBtn.textContent = '🎬 Демо: ВЫКЛ';
+        }
+    });
+
+    modeSelect?.addEventListener('change', (e) => {
+        mode = e.target.value || 'orbit';
+    });
+
+    speedRange?.addEventListener('input', (e) => {
+        speed = parseFloat(e.target.value) || 1.0;
+        if (speedVal) speedVal.textContent = `${speed.toFixed(1)}×`;
+    });
+
+    wrap?.addEventListener('pointerdown', (e) => e.stopPropagation());
+    wrap?.addEventListener('mousedown', (e) => e.stopPropagation());
+
+    function tick(now) {
+        requestAnimationFrame(tick);
+        const dt = Math.min((now - lastTime) / 1000, 0.1);
+        lastTime = now;
+        if (!active || !capturedCamera) return;
+
+        elapsed += dt * speed;
+        const target = capturedControls?.target || new THREE.Vector3(0, 0, 0);
+
+        if (mode === 'spin_model' && capturedScene) {
+            const pivot = capturedScene.children.find(
+                c => c.type === 'Group' && !c.name.includes('Helper') && !c.isTransformControls
+            );
+            if (pivot) {
+                pivot.rotation.y += 0.65 * dt * speed;
+                return;
+            }
+        }
+
+        const offset = new THREE.Vector3().subVectors(capturedCamera.position, target);
+        const spherical = new THREE.Spherical().setFromVector3(offset);
+        spherical.radius = Math.max(spherical.radius, 10);
+
+        if (mode === 'orbit' || mode === 'spin_model') {
+            spherical.theta += 0.55 * dt * speed;
+            spherical.phi += (Math.PI * 0.38 - spherical.phi) * 0.04;
+        } else if (mode === 'wave') {
+            spherical.theta += 0.50 * dt * speed;
+            spherical.phi = Math.PI * 0.42 + Math.sin(elapsed * 0.9) * 0.28;
+        } else if (mode === 'sfiral') {
+            spherical.theta += 0.45 * dt * speed;
+            spherical.phi = Math.PI * 0.45 + Math.sin(elapsed * 1.1) * 0.35;
+            spherical.radius *= (1.0 + Math.sin(elapsed * 0.7) * 0.0025);
+        } else if (mode === 'gyro') {
+            spherical.theta += 0.42 * dt * speed;
+            spherical.phi = Math.PI * 0.50 + Math.sin(elapsed * 0.65) * 0.42;
+        }
+
+        spherical.phi = Math.max(0.12, Math.min(Math.PI - 0.12, spherical.phi));
+        offset.setFromSpherical(spherical);
+        capturedCamera.position.copy(target).add(offset);
+        capturedCamera.lookAt(target);
+        if (capturedControls) origOrbitUpdate.call(capturedControls);
+    }
+
+    requestAnimationFrame(tick);
 </script>
 
 <script type="module" src="./editor/editor.js"></script>
