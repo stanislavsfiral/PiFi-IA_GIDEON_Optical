@@ -5,140 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GIDEON — Конструктор Сфиралей</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        #boxSelectToggleBtn {
-            position: absolute; top: 60px; left: 10px; z-index: 50;
-            background: rgba(16, 23, 38, 0.9); color: #88a0c0;
-            border: 1px solid #1f2d4a; padding: 6px 12px; border-radius: 6px;
-            font-size: 0.7rem; font-weight: bold; cursor: pointer;
-            backdrop-filter: blur(4px); transition: all 0.2s;
-        }
-        #boxSelectToggleBtn.active {
-            background: #00e5ff; color: #0b0f19; border-color: #00e5ff;
-            box-shadow: 0 0 10px rgba(0,229,255,0.5);
-        }
-        #sceneBrightnessControl {
-            position: absolute; top: 60px; left: 155px; z-index: 55;
-            display: flex; align-items: center; gap: 6px;
-            background: rgba(16, 23, 38, 0.92);
-            border: 1px solid #2a3f6d; padding: 5px 10px; border-radius: 6px;
-            backdrop-filter: blur(4px); pointer-events: auto;
-        }
-        #sceneBrightnessControl input[type="range"] {
-            width: 90px; accent-color: #00e5ff; cursor: pointer; pointer-events: auto;
-        }
-        #demoRotateControl {
-            position: absolute; top: 60px; left: 375px; z-index: 55;
-            display: flex; align-items: center; gap: 6px;
-            background: rgba(16, 23, 38, 0.92);
-            border: 1px solid #00e5ff; padding: 4px 10px; border-radius: 6px;
-            backdrop-filter: blur(4px); pointer-events: auto;
-        }
-        #demoRotateToggleBtn {
-            background: #1f2d4a; color: #00ffaa;
-            border: 1px solid #00ffaa; padding: 3px 8px; border-radius: 4px;
-            font-size: 0.72rem; font-weight: bold; cursor: pointer;
-        }
-        #demoRotateToggleBtn.active {
-            background: #00ffaa; color: #0b0f19;
-            box-shadow: 0 0 10px rgba(0,255,170,0.45);
-        }
-        #demoRotateModeSelect {
-            background: #101726; color: #fff; border: 1px solid #2a3f6d;
-            padding: 3px 6px; border-radius: 4px; font-size: 0.72rem; outline: none;
-        }
-        #demoRotateSpeedRange {
-            width: 75px; accent-color: #00ffaa; cursor: pointer;
-        }
-        .help-trigger-btn {
-            position: absolute; top: 60px; right: 12px; z-index: 50;
-            background: rgba(16,23,38,0.9); color: #00e5ff;
-            border: 1px solid #00e5ff; border-radius: 50%;
-            width: 36px; height: 36px; font-size: 1rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .ai-floating-box {
-            position: absolute; top: 105px; left: 10px; z-index: 45;
-            display: flex; gap: 6px; flex-wrap: wrap;
-            background: rgba(16, 23, 38, 0.9); padding: 8px;
-            border-radius: 6px; border: 1px solid #1f2d4a;
-            backdrop-filter: blur(6px);
-        }
-        .ai-floating-box input {
-            background: #101726; border: 1px solid #2a3f6d; color: #00e5ff;
-            padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;
-            width: 140px; outline: none;
-        }
-        .ai-floating-box input:focus { border-color: #00e5ff; }
-        .ai-floating-box button {
-            background: #00e5ff; color: #0b0f19; border: none;
-            padding: 4px 10px; border-radius: 4px; cursor: pointer;
-            font-weight: bold; font-size: 0.7rem;
-        }
-        #teachAiBtn { background: #2980b9 !important; color: #fff !important; }
-        #neurocoreBtn { background: #00ffaa !important; color: #0b0f19 !important; }
-        #agentBtn { background: #ff00ff !important; color: #0b0f19 !important; }
-        #rebuildEdgesBtn {
-            background: #1f2d4a; color: #00ffaa; border: 1px solid #00ffaa;
-            padding: 4px 8px; border-radius: 4px; cursor: pointer;
-            font-size: 0.85rem; transition: all 0.2s;
-        }
-        #rebuildEdgesBtn:hover { background: #00ffaa; color: #0b0f19; }
-        #anatomyModeBtn {
-            background: #1f2d4a; color: #a0aec0; border: 1px solid #2d3748;
-            padding: 4px 8px; border-radius: 4px; cursor: pointer;
-            font-size: 0.85rem; transition: all 0.2s;
-        }
-        #anatomyModeBtn.active {
-            background: #00ffaa; color: #0b0f19; border-color: #00ffaa;
-            box-shadow: 0 0 10px rgba(0,255,170,0.4);
-        }
-        #toggleEdgesBtn {
-            background: #1f2d4a; color: #00ffaa; border: 1px solid #00ffaa;
-            padding: 4px 8px; border-radius: 4px; cursor: pointer;
-            font-size: 0.85rem; transition: all 0.2s;
-        }
-        #toggleEdgesBtn.off {
-            background: #2a1f1f; color: #ff4444; border-color: #ff4444;
-        }
-
-        /* === PATCH: читаемость консоли + сворачивание === */
-        #console {
-            font-size: 0.85rem !important;
-            max-height: 220px !important;
-            transition: max-height 0.18s ease, padding 0.18s ease;
-        }
-        #console .line {
-            font-size: 0.8rem !important;
-            padding: 3px 0 !important;
-            line-height: 1.35 !important;
-        }
-        #console.collapsed {
-            max-height: 0 !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            border-color: transparent !important;
-            overflow: hidden !important;
-        }
-        #consoleToggleBtn {
-            position: absolute;
-            right: 12px;
-            bottom: 276px;
-            z-index: 60;
-            background: #1f2d4a;
-            color: #00ffaa;
-            border: 1px solid #00ffaa;
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            pointer-events: auto;
-            transition: bottom 0.18s ease;
-        }
-        #consoleToggleBtn.collapsed { bottom: 56px; }
-        /* === END PATCH === */
-    </style>
     <script type="importmap">
         {
             "imports": {
@@ -153,87 +19,150 @@
     <div id="canvasContainer">
         <canvas id="renderCanvas"></canvas>
 
-        <div id="toolbar">
-            <a href="index.html" class="back-btn" style="text-decoration:none;">◀</a>
-            <button id="addNodeBtn" title="Добавить сфираль">➕</button>
-            <button id="copyGroupBtn" title="Копировать">📋</button>
-            <button id="connectBtn" title="Соединить">🔗</button>
-            <button id="deleteBtn" title="Удалить">🗑️</button>
+        <!-- Кнопка чистого экрана для записи TikTok / скриншотов -->
+        <button id="zenUiToggleBtn" title="Скрыть или показать интерфейс (для записи видео)">👁️</button>
 
-            <button id="toolUndoBtn" class="tool-btn" title="Отменить (Ctrl+Z)">↩️</button>
-            <button id="toolRedoBtn" class="tool-btn" title="Вернуть (Ctrl+Y)">↪️</button>
+        <!-- ЕДИНЫЙ ВЕРХНИЙ СТЕК ИНТЕРФЕЙСА (без наложений на ПК и телефоне) -->
+        <div id="hudTopStack">
+            <!-- Ряд 1: Основные инструменты сборки -->
+            <div id="toolbar">
+                <a href="index.html" class="back-btn" style="text-decoration:none;" title="В визуализатор">◀</a>
+                <button id="addNodeBtn" title="Добавить новую сфираль в сцену">➕</button>
+                <button id="copyGroupBtn" title="Дублировать выделенную сфираль или группу">📋</button>
+                <button id="connectBtn" title="Соединить две сфирали оптическим швом">🔗</button>
+                <button id="deleteBtn" title="Удалить выделенное">🗑️</button>
 
-            <button id="toolCenterBtn" title="В центр (0,0,0)" style="font-size:0.8rem;">🎯</button>
-            <button id="snapObjectsBtn" title="Выровнять по сетке/углам" style="font-size:0.8rem; background:#10b981; color:#fff;">🧲</button>
+                <button id="toolUndoBtn" class="tool-btn" title="Отменить действие (Ctrl+Z)">↩️</button>
+                <button id="toolRedoBtn" class="tool-btn" title="Вернуть действие (Ctrl+Y)">↪️</button>
 
-            <button id="anatomyModeBtn" title="Режим подуровней: ВЫКЛ">🧬 Подуровни</button>
+                <div id="view-tools" style="display:flex; gap:2px;">
+                    <button data-view="perspective" class="view-active" style="font-size:0.65rem;" title="Свободная 3D-камера">3D</button>
+                    <button data-view="top" style="font-size:0.65rem;" title="Вид сверху (Top)">T</button>
+                    <button data-view="front" style="font-size:0.65rem;" title="Вид спереди (Front)">F</button>
+                    <button data-view="side" style="font-size:0.65rem;" title="Вид сбоку (Side)">S</button>
+                </div>
 
-            <button id="toggleEdgesBtn" title="Показать/скрыть связи">🔗 Связи: ВКЛ</button>
+                <button id="toolTranslateBtn" class="tool-btn" style="font-size:0.75rem;" title="Точное перемещение по осям X/Y/Z">↕</button>
+                <button id="toolRotateBtn" class="tool-btn" style="font-size:0.75rem;" title="Точный поворот по осям X/Y/Z">↻</button>
 
-            <button id="rebuildEdgesBtn" title="Пересобрать типы связей (chain_seam / bridge / defect) по решётке">🧹 Связи</button>
+                <!-- Единое выпадающее меню редко используемых инструментов с пояснениями -->
+                <div class="dropdown" id="toolsMenuWrap">
+                    <button id="moreBtn" title="Дополнительные инструменты сборки и анализа">⚙️ Инструменты ▾</button>
+                    <div class="dropdown-content dropdown-rich" id="dropdownMenu">
+                        <div class="menu-section-title">Режимы и привязка</div>
+                        <button id="anatomyModeBtn" title="Выделять отдельные полувитки и S-переход">
+                            <span class="menu-btn-title">🧬 Подуровни: ВЫКЛ</span>
+                            <span class="menu-btn-desc">Выбор отдельных витков и S-перехода вместо всей сфирали</span>
+                        </button>
+                        <button id="toggleEdgesBtn" title="Показать/скрыть линии связей">
+                            <span class="menu-btn-title">🔗 Связи: ВКЛ</span>
+                            <span class="menu-btn-desc">Видимость соединительных линий между узлами</span>
+                        </button>
+                        <button id="snapObjectsBtn" title="Выровнять по сетке/углам">
+                            <span class="menu-btn-title">🧲 Выровнять по сетке</span>
+                            <span class="menu-btn-desc">Привязать координаты и углы выделенного к шагу решётки</span>
+                        </button>
+                        <button id="toolCenterBtn" title="В центр (0,0,0)">
+                            <span class="menu-btn-title">🎯 В центр (0,0,0)</span>
+                            <span class="menu-btn-desc">Переместить выделенную модель в начало координат</span>
+                        </button>
 
-            <button id="opticalReportBtn" title="Оптический отчет (MZI, дифракция, Клементс)" style="background:#1f2d4a; color:#00e5ff; border:1px solid #00e5ff; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.85rem;">🔬 Оптика</button>
+                        <div class="menu-section-title">Генерация и расчёты</div>
+                        <button id="fractalPresetBtn">
+                            <span class="menu-btn-title">🌀 Фрактал</span>
+                            <span class="menu-btn-desc">Автоматически построить фрактальную решётку сфиралей</span>
+                        </button>
+                        <button id="toggleWalshBtn">
+                            <span class="menu-btn-title">🌀 Базис Уолша</span>
+                            <span class="menu-btn-desc">Переключить троичную фазовую кодировку Уолша</span>
+                        </button>
+                        <button id="simulateBtn">
+                            <span class="menu-btn-title">✨ Резонанс</span>
+                            <span class="menu-btn-desc">Запустить визуальную волну фазового резонанса по цепи</span>
+                        </button>
+                        <button id="rebuildEdgesBtn">
+                            <span class="menu-btn-title">🧹 Пересобрать связи</span>
+                            <span class="menu-btn-desc">Обновить типы швов (chain_seam / bridge / defect) по геометрии</span>
+                        </button>
+                        <button id="opticalReportBtn">
+                            <span class="menu-btn-title">🔬 Оптический отчёт</span>
+                            <span class="menu-btn-desc">Расчёт интерферометра MZI, дифракции и матрицы Клементса</span>
+                        </button>
 
-            <div class="dropdown" style="display:inline-block; position:relative;">
-                <button id="moreBtn" style="background:#2d1f4a; color:#ff00ff; border:1px solid #ff00ff;">⚡</button>
-                <div class="dropdown-content" id="dropdownMenu">
-                    <button id="fractalPresetBtn">🌀 Фрактал</button>
-                    <button id="toggleWalshBtn">🌀 Уолш</button>
-                    <button id="simulateBtn">✨ Резонанс</button>
-                    <button id="saveModelBtn" onclick="if(typeof saveModel === 'function') saveModel();">💾 Сохранить</button>
-                    <button id="loadModelBtn">📂 Загрузить</button>
-                    <input type="file" id="fileInput" style="display:none" accept=".json">
+                        <div class="menu-section-title">Файлы и экспорт</div>
+                        <button id="saveModelBtn" onclick="if(typeof saveModel === 'function') saveModel();">
+                            <span class="menu-btn-title">💾 Сохранить JSON</span>
+                            <span class="menu-btn-desc">Скачать сборку с крипто-подписью SFIRALIUM</span>
+                        </button>
+                        <button id="loadModelBtn">
+                            <span class="menu-btn-title">📂 Загрузить JSON</span>
+                            <span class="menu-btn-desc">Открыть сохранённую модель с диска</span>
+                        </button>
+                        <button id="downloadPassportBtn">
+                            <span class="menu-btn-title">📥 HTML-паспорт</span>
+                            <span class="menu-btn-desc">Сформировать полный отчёт-паспорт текущей сборки</span>
+                        </button>
+                        <input type="file" id="fileInput" style="display:none" accept=".json">
+                    </div>
+                </div>
+
+                <!-- Скрытая по умолчанию панель ИИ (открывается по одной кнопке) -->
+                <div class="dropdown" id="aiMenuWrap">
+                    <button id="aiMenuToggleBtn" title="ИИ-инструменты (требуют запущенный sfiral_server.py)">🧠 ИИ ▾</button>
+                    <div class="dropdown-content dropdown-rich ai-popover" id="aiDropdownPanel">
+                        <div class="menu-section-title">Локальный ИИ-сервер (sfiral_server.py)</div>
+                        <div class="ai-input-row">
+                            <input type="text" id="aiQueryInput" placeholder="Вопрос по текущей сборке..." />
+                            <button id="askAiBtn">Спросить</button>
+                        </div>
+                        <button id="teachAiBtn">
+                            <span class="menu-btn-title">🎓 Обучить термину</span>
+                            <span class="menu-btn-desc">Сохранить название и физику выделенного узла в базу ИИ</span>
+                        </button>
+                        <button id="neurocoreBtn">
+                            <span class="menu-btn-title">🧬 Диагноз Нейроядра</span>
+                            <span class="menu-btn-desc">Проверить инварианты sigma / tau / W и адреса Оттендорфа</span>
+                        </button>
+                        <button id="agentBtn">
+                            <span class="menu-btn-title">🤖 Обучение агента</span>
+                            <span class="menu-btn-desc">Автоподбор углов витков для максимизации хирального ритма</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="openHelpBtn" title="Справочник по управлению">?</button>
+            </div>
+
+            <!-- Ряд 2: Компактные контролы сцены (Рамка, Яркость, Демо-вращение, Вентили) -->
+            <div id="subControlsRow">
+                <button id="boxSelectToggleBtn" title="Выделение нескольких сфиралей рамкой">🔲 Рамка: ВЫКЛ</button>
+
+                <div id="sceneBrightnessControl" title="Яркость всех моделей в сцене">
+                    <span style="font-size:0.72rem; color:#ffee00; user-select:none;">☀️</span>
+                    <input type="range" id="sceneBrightnessRange" min="0.5" max="2.0" step="0.05" value="1.3" />
+                    <span id="sceneBrightnessVal" style="font-size:0.7rem; color:#00e5ff; min-width:34px; font-weight:bold; user-select:none;">130%</span>
+                </div>
+
+                <div id="demoRotateControl" title="Демонстрационное авто-вращение для записи видео">
+                    <button id="demoRotateToggleBtn">🎬 Демо: ВЫКЛ</button>
+                    <select id="demoRotateModeSelect" title="Траектория вращения">
+                        <option value="orbit" selected>По кольцу</option>
+                        <option value="wave">Волновой</option>
+                        <option value="sfiral">Сфираль</option>
+                        <option value="gyro">Гироскоп</option>
+                        <option value="spin_model">Вокруг оси Y</option>
+                    </select>
+                    <input type="range" id="demoRotateSpeedRange" min="0.2" max="3.0" step="0.1" value="1.0" title="Скорость вращения" />
+                    <span id="demoRotateSpeedVal" style="font-size:0.7rem; color:#00ffaa; min-width:28px; font-family:monospace; user-select:none;">1.0×</span>
+                </div>
+
+                <div id="quantumGatesPanel" class="ibm-gates-toolbar" title="Квантово-топологические вентили">
+                    <button class="ibm-gate-btn gate-swap" id="gateRouter" title="SWAP: поменять ветви">SWAP</button>
+                    <button class="ibm-gate-btn gate-read" id="gateReadout" title="READ: считывание состояния">READ</button>
+                    <button class="ibm-gate-btn gate-scale" id="gateScaleControl" title="SCALE: масштаб и сжатие Z">SCALE</button>
+                    <button class="ibm-gate-btn gate-reset" id="gateReset" title="RST: сброс вентилей">RST</button>
                 </div>
             </div>
-
-            <div id="view-tools" style="display:flex; gap:2px;">
-                <button data-view="perspective" class="view-active" style="font-size:0.6rem;">3D</button>
-                <button data-view="top" style="font-size:0.6rem;">T</button>
-                <button data-view="front" style="font-size:0.6rem;">F</button>
-                <button data-view="side" style="font-size:0.6rem;">S</button>
-            </div>
-
-            <button id="toolTranslateBtn" class="tool-btn" style="font-size:0.6rem;">↕</button>
-            <button id="toolRotateBtn" class="tool-btn" style="font-size:0.6rem;">↻</button>
-
-            <button id="downloadPassportBtn" class="tool-btn" style="background:#2c3e50; color:#00ffcc; border:1px solid #00ffcc; font-size:0.7rem; padding:4px 8px;" title="HTML-паспорт модели">📥 Отчет</button>
-        </div>
-
-        <button id="boxSelectToggleBtn" title="Рамка выделения">🔲 Рамка: ВЫКЛ</button>
-
-        <div id="sceneBrightnessControl" title="Яркость всех моделей в сцене">
-            <span style="font-size:0.75rem; color:#ffee00; user-select:none;">☀️ Яркость:</span>
-            <input type="range" id="sceneBrightnessRange" min="0.5" max="2.0" step="0.05" value="1.3" />
-            <span id="sceneBrightnessVal" style="font-size:0.72rem; color:#00e5ff; min-width:36px; font-weight:bold; user-select:none;">130%</span>
-        </div>
-
-        <div id="demoRotateControl" title="Демонстрационное авто-вращение для записи видео">
-            <button id="demoRotateToggleBtn">🎬 Демо: ВЫКЛ</button>
-            <select id="demoRotateModeSelect" title="Траектория вращения">
-                <option value="orbit" selected>Облёт: По кольцу</option>
-                <option value="wave">Облёт: Волновой</option>
-                <option value="sfiral">Облёт: Сфираль</option>
-                <option value="gyro">Облёт: Гироскоп</option>
-                <option value="spin_model">Сборка: Вокруг оси Y</option>
-            </select>
-            <input type="range" id="demoRotateSpeedRange" min="0.2" max="3.0" step="0.1" value="1.0" title="Скорость вращения" />
-            <span id="demoRotateSpeedVal" style="font-size:0.7rem; color:#00ffaa; min-width:30px; font-family:monospace; user-select:none;">1.0×</span>
-        </div>
-
-        <div class="ai-floating-box">
-            <input type="text" id="aiQueryInput" placeholder="Спросить ИИ-агента..." />
-            <button id="askAiBtn" title="Запрос ИИ">🧠 Спросить</button>
-            <button id="teachAiBtn" title="Обучить ИИ выделенному">🧠 Обучить</button>
-            <button id="neurocoreBtn" title="Нейроядро: диагноз sigma / tau / W / Ottendorf">🧠 Ядро</button>
-            <button id="agentBtn" title="Агент: сам крутит витки и ищет хиральный ритм по награде ядра">🤖 Обучение</button>
-        </div>
-
-        <div id="quantumGatesPanel" class="ibm-gates-toolbar" style="position:absolute; top:105px; right:12px; z-index:25;">
-            <span style="color: var(--text-dim); font-size: 0.65rem; margin-right: 2px;">Вентили:</span>
-            <button class="ibm-gate-btn gate-swap" id="gateRouter" title="SWAP">SWAP</button>
-            <button class="ibm-gate-btn gate-read" id="gateReadout" title="Readout">READ</button>
-            <button class="ibm-gate-btn gate-scale" id="gateScaleControl" title="Scale & Stretch">SCALE</button>
-            <button class="ibm-gate-btn gate-reset" id="gateReset" title="Reset">RST</button>
         </div>
 
         <div id="statsBar">
@@ -261,7 +190,7 @@
             </div>
         </div>
 
-        <div id="moveDialogModal" class="modal" style="display:none; position:fixed; top:70px; right:150px; width:210px; background:#131b2e; border:1px solid #00e5ff; border-radius:5px; padding:10px 12px; z-index:1000; box-shadow: 0 6px 20px rgba(0,0,0,0.7); color:#f0f4f8; font-size:0.75rem;">
+        <div id="moveDialogModal" class="modal" style="display:none; position:fixed; top:110px; right:16px; width:210px; background:#131b2e; border:1px solid #00e5ff; border-radius:5px; padding:10px 12px; z-index:1000; box-shadow: 0 6px 20px rgba(0,0,0,0.7); color:#f0f4f8; font-size:0.75rem;">
             <div style="font-weight:bold; color:#00e5ff; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1f2d4a; padding-bottom:4px;">
                 <span>⤩ Перемещение</span>
                 <span id="closeMoveModalX" style="cursor:pointer; color:#88a0c0; font-size:0.9rem;">✕</span>
@@ -273,7 +202,7 @@
             </div>
         </div>
 
-        <div id="rotateDialogModal" class="modal" style="display:none; position:fixed; top:70px; right:150px; width:210px; background:#131b2e; border:1px solid #00e5ff; border-radius:5px; padding:10px 12px; z-index:1000; box-shadow: 0 6px 20px rgba(0,0,0,0.7); color:#f0f4f8; font-size:0.75rem;">
+        <div id="rotateDialogModal" class="modal" style="display:none; position:fixed; top:110px; right:16px; width:210px; background:#131b2e; border:1px solid #00e5ff; border-radius:5px; padding:10px 12px; z-index:1000; box-shadow: 0 6px 20px rgba(0,0,0,0.7); color:#f0f4f8; font-size:0.75rem;">
             <div style="font-weight:bold; color:#00e5ff; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1f2d4a; padding-bottom:4px;">
                 <span>🔄 Поворот группы (°)</span>
                 <span id="closeRotModalX" style="cursor:pointer; color:#88a0c0; font-size:0.9rem;">✕</span>
@@ -285,9 +214,9 @@
             </div>
         </div>
 
-        <div id="opticalModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:650px; max-height:80vh; background:#131b2e; border:2px solid #00e5ff; border-radius:8px; padding:20px; z-index:2000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); color:#f0f4f8; font-family:monospace; overflow-y:auto;">
+        <div id="opticalModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:min(650px, 94vw); max-height:80vh; background:#131b2e; border:2px solid #00e5ff; border-radius:8px; padding:16px; z-index:2000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); color:#f0f4f8; font-family:monospace; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1f2d4a; padding-bottom:10px; margin-bottom:15px;">
-                <h3 style="color:#00e5ff; margin:0; font-size:1rem;">🔬 Диагностический отчет по оптике и интерференции</h3>
+                <h3 style="color:#00e5ff; margin:0; font-size:0.95rem;">🔬 Диагностический отчет по оптике и интерференции</h3>
                 <button id="closeOpticalModal" style="background:none; border:none; color:#ff4444; font-size:1.2rem; cursor:pointer; font-weight:bold;">✕</button>
             </div>
             <div id="opticalModalContent" style="font-size:0.75rem; line-height:1.5; color:#a0aec0;">
@@ -305,25 +234,41 @@
             </div>
         </div>
 
-        <button id="togglePropBtn" class="toggle-prop-btn" style="position:absolute; bottom:130px; right:12px; z-index:50; background:#00e5ff; color:#0b0f19; border:none; border-radius:50%; width:48px; height:48px; font-size:1.4rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 16px rgba(0,229,255,0.4);">📐</button>
+        <button id="togglePropBtn" class="toggle-prop-btn" title="Свойства выделенного узла">📐</button>
 
         <div id="selectionRect"></div>
 
-        <button id="openHelpBtn" class="help-trigger-btn">?</button>
         <div id="helpModal">
             <div class="help-modal-content">
                 <div class="help-modal-header">
-                    <h2>📚 Справочник GIDEON: Конструктор Сфиралей</h2>
+                    <h2>📚 Шпаргалка по кнопкам GIDEON</h2>
                     <button class="help-close-btn" id="closeHelpBtn">✕</button>
                 </div>
-                <div class="help-modal-body" style="font-size:0.85rem; line-height:1.4;">
-                    <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(0,229,255,0.05); border-left: 2px solid #00e5ff; border-radius: 4px;">
-                        <h3 style="color: #00e5ff; margin-bottom: 6px; font-size: 0.95rem;">🛠️ Навигация и Выделение</h3>
-                        <p>• <b>Вращение камеры:</b> ЛКМ + тянуть.<br>• <b>Смещение:</b> ПКМ + тянуть.<br>• <b>Зум:</b> Колесико мыши.<br>• <b>🎬 Демо:</b> автоматический облёт или вращение модели вокруг оси Y для записи видео.</p>
+                <div class="help-modal-body" style="font-size:0.82rem; line-height:1.45;">
+                    <div class="help-section">
+                        <h3>🛠️ Верхняя панель сборки</h3>
+                        <p>
+                            • <b>➕ / 📋 / 🔗 / 🗑️:</b> добавить сфираль, дублировать, соединить две сфирали швом, удалить.<br>
+                            • <b>↩️ / ↪️:</b> отменить или вернуть последнее действие.<br>
+                            • <b>3D / T / F / S:</b> переключение ракурсов (3D, Сверху, Спереди, Сбоку).<br>
+                            • <b>↕ / ↻:</b> окна точного ввода координат XYZ и углов поворота.<br>
+                            • <b>👁️ (правый верхний угол):</b> скрыть весь интерфейс для чистой записи видео.
+                        </p>
                     </div>
-                    <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(0,255,170,0.05); border-left: 2px solid #00ffaa; border-radius: 4px;">
-                        <h3 style="color: #00ffaa; margin-bottom: 6px; font-size: 0.95rem;">🧹 Топология, Нейроядро и Агент</h3>
-                        <p>• <b>🧹 Связи:</b> пересобрать типы связей по решётке (chain_seam / bridge / defect).<br>• <b>🧠 Ядро:</b> диагноз сборки — sigma / tau / W / Ottendorf.<br>• <b>🤖 Обучение:</b> агент сам поворачивает витки и ищет хиральный ритм по награде ядра.<br>• <b>▾ Свернуть текст:</b> спрятать консоль, чтобы смотреть на модель.</p>
+                    <div class="help-section">
+                        <h3>⚙️ Меню «Инструменты»</h3>
+                        <p>
+                            • <b>🧬 Подуровни:</b> позволяет кликать отдельно по правому/левому витку или S-переходу.<br>
+                            • <b>🧲 Выровнять по сетке:</b> привязывает координаты и углы к шагу сетки.<br>
+                            • <b>🌀 Фрактал / Уолш / ✨ Резонанс:</b> генерация фрактальной структуры, фазовая кодировка и запуск волны.<br>
+                            • <b>🧹 Пересобрать связи / 🔬 Оптика:</b> проверка швов и расчёт интерференции.
+                        </p>
+                    </div>
+                    <div class="help-section">
+                        <h3>🧠 Меню «ИИ»</h3>
+                        <p>
+                            Работает при запущенном локальном сервере <code>py sfiral_server.py</code>: задаёт вопросы по графу, сохраняет термины, проверяет инварианты Нейроядра и запускает обучение агента.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -540,7 +485,7 @@
             }
         } catch (err) {
             if (logEl) {
-                logEl.innerHTML += `<div class="console-line" style="color:#ff4444; margin-top:4px;">❌ [Ошибка ИИ]: Бэкенд не отвечает.</div>`;
+                logEl.innerHTML += `<div class="line" style="color:#ff4444; margin-top:4px;">❌ [Ошибка ИИ]: Локальный сервер sfiral_server.py не запущен.</div>`;
                 logEl.scrollTop = logEl.scrollHeight;
             }
         }
@@ -579,6 +524,7 @@
     };
 
     document.getElementById('neurocoreBtn')?.addEventListener('click', () => {
+        document.getElementById('aiDropdownPanel')?.classList.remove('show');
         window.runNeurocoreAnalysis();
     });
 
@@ -600,7 +546,6 @@
             const data = await response.json();
             if (!data.ok) {
                 say('❌ [Агент]: ' + (data.error || 'ошибка') + ' ' + (data.note || ''), '#ff8888');
-                say('Проверь: в sfiral_server.py есть endpoint /api/agent_learn.', '#ffaa00');
                 return;
             }
             const trace = data.trace || [];
@@ -630,15 +575,13 @@
             say('✅ [Агент]: лучшее reward=' + Number(data.best_reward).toFixed(3), '#00ffaa');
             say('<pre style="white-space:pre-wrap;color:#dfffe9;margin:4px 0;">' +
                 (data.final_diagnosis || '') + '</pre>', '#00ffaa');
-            if (typeof window.__agentSetGraph !== 'function') {
-                say('ℹ️ [Агент]: витки на экране не крутились — допиши хук __agentSetGraph в конец editor.js.', '#ffaa00');
-            }
         } catch (err) {
             say('❌ [Агент]: сервер недоступен. Запусти: py sfiral_server.py', '#ff6666');
         }
     };
 
     document.getElementById('agentBtn')?.addEventListener('click', () => {
+        document.getElementById('aiDropdownPanel')?.classList.remove('show');
         window.runAgentDemo();
     });
 
@@ -648,38 +591,69 @@
             window.rebuildEdgeTypesByGeometry();
         } else if (logEl) {
             logEl.style.display = 'block';
-            logEl.innerHTML += '<div class="line" style="color:#ff8888;">🧹 [Связи]: rebuildEdgeTypesByGeometry нет в editor.js — цепь всё равно работает, это только пересборка типов.</div>';
+            logEl.innerHTML += '<div class="line" style="color:#ff8888;">🧹 [Связи]: цепь работает, пересборка типов не требуется.</div>';
         }
     });
 
     document.getElementById('askAiBtn')?.addEventListener('click', () => {
         const inp = document.getElementById('aiQueryInput');
-        if (inp && inp.value.trim()) { window.askAI(inp.value.trim()); inp.value = ''; }
+        if (inp && inp.value.trim()) {
+            document.getElementById('aiDropdownPanel')?.classList.remove('show');
+            window.askAI(inp.value.trim());
+            inp.value = '';
+        }
     });
     document.getElementById('aiQueryInput')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             const inp = document.getElementById('aiQueryInput');
-            if (inp && inp.value.trim()) { window.askAI(inp.value.trim()); inp.value = ''; }
+            if (inp && inp.value.trim()) {
+                document.getElementById('aiDropdownPanel')?.classList.remove('show');
+                window.askAI(inp.value.trim());
+                inp.value = '';
+            }
         }
     });
 
     document.getElementById('teachAiBtn')?.addEventListener('click', () => {
+        document.getElementById('aiDropdownPanel')?.classList.remove('show');
         if (typeof window.teachAITerm === 'function') {
             const termName = prompt("Введите название для выделенного элемента или группы:", "Топологический элемент Сфирали");
             const termDesc = prompt("Введите описание анатомии и физики:", "Описание геометрии и связей");
             if (termName) { window.teachAITerm(termName, termDesc); }
         } else {
-            alert('⚠️ Модуль обучения еще загружается или не инициализирован.');
+            alert('⚠️ Модуль обучения доступен только при запущенном локальном сервере.');
         }
+    });
+
+    // Управление выпадающими меню «Инструменты» и «ИИ»
+    document.getElementById('moreBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('aiDropdownPanel')?.classList.remove('show');
+        document.getElementById('dropdownMenu')?.classList.toggle('show');
+    });
+    document.getElementById('aiMenuToggleBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('dropdownMenu')?.classList.remove('show');
+        document.getElementById('aiDropdownPanel')?.classList.toggle('show');
+    });
+    document.getElementById('aiDropdownPanel')?.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => {
+        document.getElementById('dropdownMenu')?.classList.remove('show');
+        document.getElementById('aiDropdownPanel')?.classList.remove('show');
+    });
+
+    // Кнопка чистого экрана (скрыть все панели для записи видео)
+    const zenBtn = document.getElementById('zenUiToggleBtn');
+    const hudStack = document.getElementById('hudTopStack');
+    zenBtn?.addEventListener('click', () => {
+        const hidden = hudStack.classList.toggle('ui-hidden');
+        zenBtn.textContent = hidden ? '👁️‍🗨️' : '👁️';
+        zenBtn.classList.toggle('active', hidden);
     });
 
     document.getElementById('openHelpBtn')?.addEventListener('click', () => document.getElementById('helpModal')?.classList.add('active'));
     document.getElementById('closeHelpBtn')?.addEventListener('click', () => document.getElementById('helpModal')?.classList.remove('active'));
-    document.getElementById('moreBtn')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        document.getElementById('dropdownMenu')?.classList.toggle('show');
-    });
-    document.addEventListener('click', () => document.getElementById('dropdownMenu')?.classList.remove('show'));
+
     document.getElementById('togglePropBtn')?.addEventListener('click', () => {
         document.getElementById('propertiesPanel')?.classList.toggle('hidden');
         document.getElementById('propertiesPanel')?.classList.toggle('active');
@@ -706,12 +680,13 @@
     const anatomyBtn = document.getElementById('anatomyModeBtn');
     anatomyBtn?.addEventListener('click', () => {
         window.isAnatomicalSelectionMode = !window.isAnatomicalSelectionMode;
+        const titleSpan = anatomyBtn.querySelector('.menu-btn-title');
         if (window.isAnatomicalSelectionMode) {
             anatomyBtn.classList.add('active');
-            anatomyBtn.innerHTML = '🧬 Подуровни: ВКЛ';
+            if (titleSpan) titleSpan.textContent = '🧬 Подуровни: ВКЛ';
         } else {
             anatomyBtn.classList.remove('active');
-            anatomyBtn.innerHTML = '🧬 Подуровни';
+            if (titleSpan) titleSpan.textContent = '🧬 Подуровни: ВЫКЛ';
         }
     });
 
@@ -719,7 +694,8 @@
     toggleEdgesBtn?.addEventListener('click', () => {
         if (typeof window.showEdgesFlag !== 'undefined') {
             window.showEdgesFlag = !window.showEdgesFlag;
-            toggleEdgesBtn.innerHTML = window.showEdgesFlag ? '🔗 Связи: ВКЛ' : '🚫 Связи: ВЫКЛ';
+            const titleSpan = toggleEdgesBtn.querySelector('.menu-btn-title');
+            if (titleSpan) titleSpan.textContent = window.showEdgesFlag ? '🔗 Связи: ВКЛ' : '🚫 Связи: ВЫКЛ';
             toggleEdgesBtn.classList.toggle('off', !window.showEdgesFlag);
             if (typeof window.updateEdges === 'function') window.updateEdges();
         }
