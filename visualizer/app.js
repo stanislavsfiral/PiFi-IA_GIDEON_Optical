@@ -24,6 +24,7 @@ let demoRotateActive = false;
 let demoRotateMode = 'orbit';
 let demoRotateSpeed = 1.0;
 let demoElapsed = 0;
+let demoBaseRadius = null;
 
 const GLASS_TINT_PRESETS = {
     clear: 0x99ddff,
@@ -80,7 +81,6 @@ function applyGlassAppearance() {
                 obj.material.emissiveIntensity = (isClearMode ? 0.16 : 0.28) * Math.pow(modelBrightness, 1.3);
             }
 
-            // Чёткая плотность стекла без тумана при любой толщине
             const baseOpacity = isClearMode ? 0.34 : 0.48;
             obj.material.opacity = Math.min(Math.max(baseOpacity + (modelBrightness - 1.0) * 0.12, 0.24), 0.72);
             obj.material.needsUpdate = true;
@@ -130,6 +130,35 @@ function syncCubesToggleButton(btn) {
     }
 }
 
+function captureDemoBaseRadius() {
+    if (!camera || !controls) return;
+    const dist = camera.position.distanceTo(controls.target);
+    demoBaseRadius = Math.max(dist, 50);
+}
+
+function fitCameraToModel() {
+    if (!spiralGroup || !camera || !controls) return;
+    const box = new THREE.Box3().setFromObject(spiralGroup);
+    if (box.isEmpty()) return;
+
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    box.getCenter(center);
+    box.getSize(size);
+
+    const maxDim = Math.max(size.x, size.y, size.z, 120);
+    const fovRad = THREE.MathUtils.degToRad(camera.fov);
+    const dist = Math.abs(maxDim / (2 * Math.tan(fovRad / 2))) * 1.65;
+
+    controls.target.copy(center);
+    const dir = new THREE.Vector3(0.6, 0.45, 0.7).normalize();
+    camera.position.copy(center).add(dir.multiplyScalar(dist));
+    controls.update();
+
+    demoBaseRadius = dist;
+    demoElapsed = 0;
+}
+
 function initDemoRotateControls() {
     let wrap = document.getElementById('demoRotateControl');
     let toggleBtn = document.getElementById('demoRotateToggleBtn');
@@ -137,7 +166,6 @@ function initDemoRotateControls() {
     let speedRange = document.getElementById('demoRotateSpeedRange');
     let speedVal = document.getElementById('demoRotateSpeedVal');
 
-    // Если блок отсутствует в HTML — создаём его автоматически
     if (!toggleBtn) {
         const host = document.getElementById('canvasContainer') || document.body;
         wrap = document.createElement('div');
@@ -166,7 +194,6 @@ function initDemoRotateControls() {
     if (!toggleBtn || toggleBtn.dataset.visBound === '1') return;
     toggleBtn.dataset.visBound = '1';
 
-    // Синхронизируем начальные значения из DOM
     demoRotateActive = toggleBtn.classList.contains('active');
     if (modeSelect) demoRotateMode = modeSelect.value || 'orbit';
     if (speedRange) {
@@ -178,11 +205,14 @@ function initDemoRotateControls() {
         e.stopPropagation();
         demoRotateActive = !demoRotateActive;
         if (demoRotateActive) {
+            demoElapsed = 0;
+            captureDemoBaseRadius();
             toggleBtn.classList.add('active');
             toggleBtn.textContent = '🎬 Демо: ВКЛ';
             toggleBtn.style.background = '#00ffaa';
             toggleBtn.style.color = '#0b0f19';
         } else {
+            demoBaseRadius = null;
             toggleBtn.classList.remove('active');
             toggleBtn.textContent = '🎬 Демо: ВЫКЛ';
             toggleBtn.style.background = '#1f2d4a';
@@ -192,6 +222,8 @@ function initDemoRotateControls() {
 
     modeSelect?.addEventListener('change', (e) => {
         demoRotateMode = e.target.value || 'orbit';
+        demoElapsed = 0;
+        captureDemoBaseRadius();
     });
 
     speedRange?.addEventListener('input', (e) => {
@@ -210,7 +242,7 @@ function init3D() {
     
     scene = new THREE.Scene();
     
-    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 8000);
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 20000);
     camera.position.set(600, 450, 700);
 
     const canvasEl = document.getElementById('renderCanvas');
@@ -227,6 +259,14 @@ function init3D() {
     controls.dampingFactor = 0.05;
     controls.target.set(0, 0, 0); 
     controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+
+    // Если пользователь вручную крутит колесико зума во время демо — обновляем опорный радиус
+    controls.addEventListener('start', () => {
+        demoBaseRadius = null;
+    });
+    controls.addEventListener('end', () => {
+        if (demoRotateActive) captureDemoBaseRadius();
+    });
 
     scene.add(new THREE.AmbientLight(0xffffff, 1.4));
     
@@ -246,7 +286,6 @@ function init3D() {
     chipContainerGroup.visible = isModularCubesEnabled;
     scene.add(chipContainerGroup);
 
-    // Экспорт ссылок в window для совместимости
     window.__visCamera = camera;
     window.__visControls = controls;
     window.__visModelGroup = spiralGroup;
@@ -490,7 +529,7 @@ function updateGlassChipHousing(endpointsList) {
     });
 }
 
-function updateScene() {
+function updateScene(shouldFitCamera = false) {
     clearGroup(spiralGroup);
     signalSpheres = [];
     laserPulses = [];
@@ -512,7 +551,6 @@ function updateScene() {
 
     let endpointsList = [];
 
-    // Чёткий глянцевый стеклянный волновод (FrontSide без размытия задних граней)
     const solidGlassMaterial = new THREE.MeshPhysicalMaterial({
         color: 0x99ddff,
         transparent: true,
@@ -686,6 +724,7 @@ function updateScene() {
 
         updateGlassChipHousing(endpointsList);
         applyGlassAppearance();
+        if (shouldFitCamera) fitCameraToModel();
         window.computeQuantumState(customModelSource.nodes, customModelSource.edges);
 
     } else {
@@ -744,9 +783,16 @@ function updateScene() {
                 for (let i = 0; i < rawX.length; i++) {
                     let p1 = rotateCoords(rawX[i], rawY[i], rawZ[i], angle, harmAxis);
                     let p2, p3;
-                    if (mode === 'Axis X') { p2 = { x: p1.x, y: -p1.y, z: -p1.z }; p3 = { x: -p1.x, y: p1.y, z: p1.z }; } 
-                    else if (mode === 'Axis Y') { p2 = { x: -p1.x, y: p1.y, z: -p1.z }; p3 = { x: p1.x, y: p1.y, z: p1.z }; } 
-                    else { p2 = { x: -p1.x, y: -p1.y, z: p1.z }; p3 = { x: p1.x, y: p1.y, z: p1.z }; }
+                    if (mode === 'Axis X') {
+                        p2 = { x: p1.x, y: -p1.y, z: -p1.z };
+                        p3 = { x: -p1.x, y: p1.y, z: p1.z };
+                    } else if (mode === 'Axis Y') {
+                        p2 = { x: -p1.x, y: p1.y, z: -p1.z };
+                        p3 = { x: p1.x, y: -p1.y, z: p1.z };
+                    } else {
+                        p2 = { x: -p1.x, y: -p1.y, z: p1.z };
+                        p3 = { x: p1.x, y: p1.y, z: -p1.z };
+                    }
                     t2Points.push(new THREE.Vector3(p2.x, p2.y, p2.z));
                     a2Points.push(new THREE.Vector3(p3.x, p3.y, p3.z));
                 }
@@ -779,6 +825,7 @@ function updateScene() {
 
         updateGlassChipHousing(endpointsList);
         applyGlassAppearance();
+        if (shouldFitCamera) fitCameraToModel();
     }
 }
 
@@ -799,7 +846,11 @@ function updateDemoRotation(delta) {
     const target = controls.target;
     const offset = new THREE.Vector3().subVectors(camera.position, target);
     const spherical = new THREE.Spherical().setFromVector3(offset);
-    spherical.radius = Math.max(spherical.radius, 10);
+
+    if (demoBaseRadius === null || !Number.isFinite(demoBaseRadius)) {
+        demoBaseRadius = Math.max(spherical.radius, 50);
+    }
+    spherical.radius = demoBaseRadius;
 
     if (demoRotateMode === 'orbit') {
         spherical.theta += 0.55 * dt * demoRotateSpeed;
@@ -808,9 +859,10 @@ function updateDemoRotation(delta) {
         spherical.theta += 0.50 * dt * demoRotateSpeed;
         spherical.phi = Math.PI * 0.42 + Math.sin(demoElapsed * 0.9) * 0.28;
     } else if (demoRotateMode === 'sfiral') {
+        // Плавное дыхание радиуса строго вокруг опорного demoBaseRadius без улёта вдаль
         spherical.theta += 0.45 * dt * demoRotateSpeed;
         spherical.phi = Math.PI * 0.45 + Math.sin(demoElapsed * 1.1) * 0.35;
-        spherical.radius *= (1.0 + Math.sin(demoElapsed * 0.7) * 0.0025);
+        spherical.radius = demoBaseRadius * (1.0 + Math.sin(demoElapsed * 0.7) * 0.08);
     } else if (demoRotateMode === 'gyro') {
         spherical.theta += 0.42 * dt * demoRotateSpeed;
         spherical.phi = Math.PI * 0.50 + Math.sin(demoElapsed * 0.65) * 0.42;
@@ -923,13 +975,13 @@ function onMouseMove(event) {}
 function onCanvasClick(event) {}
 
 const modeSelectEl = document.getElementById('modeSelect');
-if (modeSelectEl) modeSelectEl.addEventListener('change', updateScene);
+if (modeSelectEl) modeSelectEl.addEventListener('change', () => updateScene(false));
 
 const harmAxisSelectEl = document.getElementById('harmAxisSelect');
-if (harmAxisSelectEl) harmAxisSelectEl.addEventListener('change', updateScene);
+if (harmAxisSelectEl) harmAxisSelectEl.addEventListener('change', () => updateScene(false));
 
 const coresInputEl = document.getElementById('coresInput');
-if (coresInputEl) coresInputEl.addEventListener('change', updateScene);
+if (coresInputEl) coresInputEl.addEventListener('change', () => updateScene(false));
 
 const modelFileInput = document.getElementById('modelFileInput');
 const loadModelBtn = document.getElementById('loadModelBtn');
@@ -945,8 +997,9 @@ if (loadModelBtn && modelFileInput) {
                 if (data.graph && Array.isArray(data.graph.nodes)) data = data.graph;
                 if (data.nodes && Array.isArray(data.nodes)) {
                     customModelSource = data;
+                    window.customModelSource = data;
                 }
-                updateScene();
+                updateScene(true);
             } catch(err) { alert('Ошибка чтения файла: ' + err.message); }
         };
         reader.readAsText(file); 
@@ -957,9 +1010,10 @@ if (loadModelBtn && modelFileInput) {
 const resetModelBtn = document.getElementById('resetModelBtn');
 if (resetModelBtn) {
     resetModelBtn.addEventListener('click', () => {
-        customModelSource = null; 
+        customModelSource = null;
+        window.customModelSource = null;
         resetModelBtn.style.display = 'none';
-        updateScene();
+        updateScene(true);
     });
 }
 

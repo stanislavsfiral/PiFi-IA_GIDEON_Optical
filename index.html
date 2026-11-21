@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIDEON Core | Сфираль Адамара — Интерактивное Ядро Троичной Логики</title>
-    <!-- Карта импорта для Three.js через ES-модули -->
+    <title>GIDEON Core | Сфираль Адамара — Визуализатор</title>
     <script type="importmap">
         {
             "imports": {
@@ -14,139 +13,340 @@
         }
     </script>
     <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #131b2e;
+            --bg-panel: #1c2841;
+            --border-color: #1f2d4a;
+            --accent-cyan: #00e5ff;
+            --accent-green: #00ffaa;
+            --text-light: #f0f4f8;
+            --text-dim: #88a0c0;
+            --radius: 8px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.85);
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #0b0f19;
-            color: #f0f4f8;
+            background-color: var(--bg-primary);
+            color: var(--text-light);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            touch-action: manipulation;
-        }
-        header {
-            background: #101726;
-            border-bottom: 1px solid #1f2d4a;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        h1 { font-size: 1.05rem; color: #00e5ff; letter-spacing: 1px; font-weight: 600; }
-        .subtitle { font-size: 0.75rem; color: #88a0c0; }
-        .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .nav-btn {
-            background: #00ffaa; color: #0b0f19; padding: 6px 12px; border-radius: 6px;
-            font-size: 0.75rem; font-weight: bold; text-decoration: none; transition: background 0.2s;
-            margin-top: 0;
-        }
-        .nav-btn:hover { background: #00e5ff; }
-        .main-container { display: flex; flex: 1; padding: 10px; gap: 10px; max-width: 1600px; margin: 0 auto; width: 100%; }
-        .sidebar {
-            width: 320px; background: #131b2e; border: 1px solid #1f2d4a; border-radius: 8px;
-            padding: 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-        }
-        .control-group { display: flex; flex-direction: column; gap: 4px; position: relative; }
-        label { font-size: 0.8rem; color: #00e5ff; font-weight: 500; cursor: help; }
-        select, input[type="number"], input[type="range"] {
-            background: #1f2d4a; border: 1px solid #2a3f6d; color: #fff; padding: 6px 10px;
-            border-radius: 6px; font-size: 0.85rem; outline: none; transition: border-color 0.2s;
-        }
-        input[type="range"] { padding: 0; cursor: pointer; accent-color: #00ffaa; }
-        select:focus, input:focus { border-color: #00e5ff; }
-        button {
-            background: #00e5ff; color: #0b0f19; border: none; padding: 8px; border-radius: 6px;
-            font-weight: 600; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 4px; font-size: 0.8rem;
-        }
-        button:hover { background: #00ffaa; }
-        button:active { transform: scale(0.98); }
-        .btn-secondary { background: #1f2d4a; color: #00e5ff; border: 1px solid #2a3f6d; }
-        .btn-secondary:hover { background: #2a3f6d; color: #fff; }
-        .workspace { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-        .canvas-container {
-            flex: 1; background: #101726; border: 1px solid #1f2d4a; border-radius: 8px;
-            position: relative; min-height: 400px; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+            overflow: hidden;
+            height: 100dvh;
+            width: 100vw;
             touch-action: none;
         }
-        canvas { display: block; width: 100%; height: 100%; }
 
-        /* Плашка яркости в шапке */
-        .brightness-pill {
+        #app { display: flex; width: 100vw; height: 100dvh; overflow: hidden; }
+
+        .canvas-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            background: #0b0f19;
+            position: relative;
+            overflow: hidden;
+            touch-action: none;
+        }
+        canvas { display: block; width: 100% !important; height: 100% !important; }
+
+        /* Кнопка чистого экрана для записи TikTok / скриншотов */
+        #zenUiToggleBtn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 90;
+            background: rgba(16, 23, 38, 0.92);
+            border: 1px solid var(--border-color);
+            color: var(--accent-cyan);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+        }
+        #zenUiToggleBtn.active {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.35);
+        }
+
+        /* Единый верхний стек интерфейса поверх 3D-сцены */
+        #hudTopStack {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 48px;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
             gap: 6px;
-            background: #1f2d4a;
-            border: 1px solid #2a3f6d;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            color: #ffea00;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        #hudTopStack.ui-hidden,
+        #hudBottomStack.ui-hidden {
+            opacity: 0;
+            pointer-events: none !important;
+        }
+        #hudTopStack.ui-hidden *,
+        #hudBottomStack.ui-hidden * {
+            pointer-events: none !important;
+        }
+
+        /* Ряд 1: Главный тулбар */
+        #visToolbar {
+            background: rgba(16, 23, 38, 0.92);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 4px 6px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(6px);
+            pointer-events: auto;
+        }
+
+        .brand-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            letter-spacing: 0.5px;
+            padding: 0 4px;
+            white-space: nowrap;
+        }
+
+        #visToolbar select,
+        #visToolbar button,
+        #visToolbar .nav-btn {
+            pointer-events: auto;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            white-space: nowrap;
+            min-height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
             font-weight: 600;
         }
-        .brightness-pill input[type="range"] {
-            width: 85px;
-            accent-color: #00ffaa;
-            -webkit-appearance: auto;
-            appearance: auto;
+
+        #visToolbar select {
+            color: var(--accent-green);
+            border-color: #2a3f6d;
+            max-width: 175px;
+            outline: none;
         }
 
-        /* Панель демонстрационных автоповоротов поверх 3D-холста */
-        #demoRotateControl {
-            position: absolute;
-            top: 15px;
-            right: 60px;
-            z-index: 60;
+        #toggleAnimMasterBtn {
+            background: #1f2d4a !important;
+            color: #ff88ff !important;
+            border-color: #ff00ff !important;
+        }
+        #toggleModularCubesBtn {
+            background: #2d1f4a !important;
+            color: #ff88ff !important;
+            border-color: #ff00ff !important;
+        }
+        .constructor-link {
+            background: var(--accent-green) !important;
+            color: var(--bg-primary) !important;
+            border-color: var(--accent-green) !important;
+        }
+        #paramsMenuBtn {
+            background: #232f4b !important;
+            border-color: var(--accent-cyan) !important;
+            color: var(--accent-cyan) !important;
+        }
+        #aiLogsMenuBtn {
+            background: #2a1d42 !important;
+            border-color: #c084fc !important;
+            color: #e9d5ff !important;
+        }
+        #openHelpBtn {
+            border-color: var(--accent-cyan) !important;
+            color: var(--accent-cyan) !important;
+            min-width: 28px;
+        }
+
+        /* Ряд 2: Компактные контролы сцены (Яркость + Демо-автоповорот) */
+        #subControlsRow {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
+            pointer-events: none;
+        }
+
+        .brightness-pill {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             background: rgba(16, 23, 38, 0.92);
-            border: 1px solid #00e5ff;
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
+            border: 1px solid #2a3f6d;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            color: #ffea00;
+            font-weight: 600;
+            min-height: 28px;
+            backdrop-filter: blur(4px);
+        }
+        .brightness-pill input[type="range"] {
+            width: 68px;
+            accent-color: #00ffaa;
+            cursor: pointer;
+        }
+
+        #demoRotateControl {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(16, 23, 38, 0.92);
+            border: 1px solid #2a3f6d;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
             color: #fff;
-            backdrop-filter: blur(6px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            min-height: 28px;
         }
         #demoRotateToggleBtn {
-            background: #1f2d4a;
-            color: #00ffaa;
-            border: 1px solid #00ffaa;
-            padding: 4px 9px;
-            border-radius: 5px;
+            background: var(--bg-panel);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            padding: 2px 7px;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: 700;
-            font-size: 0.75rem;
-            margin-top: 0;
+            font-size: 0.7rem;
+            white-space: nowrap;
         }
         #demoRotateToggleBtn.active {
-            background: #00ffaa;
-            color: #0b0f19;
+            background: #1f4a38;
+            color: var(--accent-green);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 8px rgba(0, 255, 170, 0.35);
         }
         #demoRotateModeSelect {
-            background: #1f2d4a;
-            color: #fff;
+            background: #101726;
+            color: var(--accent-cyan);
             border: 1px solid #2a3f6d;
-            padding: 4px 6px;
-            border-radius: 5px;
-            font-size: 0.75rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            outline: none;
         }
         #demoRotateSpeedRange {
-            width: 70px;
+            width: 60px;
             cursor: pointer;
             accent-color: #00ffaa;
         }
         #demoRotateSpeedVal {
-            color: #ffea00;
+            color: var(--accent-green);
             font-family: monospace;
             font-weight: bold;
-            min-width: 32px;
+            min-width: 28px;
         }
 
-        /* Стили для интерактивного Тултипа узлов */
+        /* Выпадающие карточки настроек поверх 3D-сцены — прижаты к левому краю */
+        .dropdown { display: inline-block; position: relative; }
+        .hud-popover {
+            display: none;
+            position: fixed;
+            top: 84px;
+            left: 8px;
+            background: rgba(17, 24, 39, 0.96);
+            border: 1px solid var(--accent-cyan);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            z-index: 95;
+            width: min(310px, 88vw);
+            max-height: calc(100dvh - 155px);
+            overflow-y: auto;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(8px);
+        }
+        .hud-popover.show { display: flex; }
+
+        .popover-section-title {
+            font-size: 0.66rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--accent-green);
+            border-bottom: 1px solid #1f2d4a;
+            padding-bottom: 3px;
+            margin-top: 2px;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 3px; }
+        .control-group label { font-size: 0.72rem; color: #00e5ff; font-weight: 500; }
+        .control-group select,
+        .control-group input[type="number"],
+        .control-group input[type="range"] {
+            background: #1f2d4a;
+            border: 1px solid #2a3f6d;
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            outline: none;
+            width: 100%;
+        }
+        .control-group input[type="range"] { padding: 0; accent-color: #00ffaa; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+        .popover-btn {
+            background: #00e5ff;
+            color: #0b0f19;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.74rem;
+            width: 100%;
+            text-align: center;
+        }
+        .popover-btn:hover { background: #00ffaa; }
+        .popover-btn.secondary {
+            background: #1f2d4a;
+            color: #00e5ff;
+            border: 1px solid #2a3f6d;
+        }
+        .popover-btn.secondary:hover { background: #2a3f6d; color: #fff; }
+
+        .legend-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.68rem;
+            color: #88a0c0;
+            padding-top: 4px;
+            border-top: 1px solid #1f2d4a;
+        }
+        .legend-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+        .badge-thesis { background: #00e5ff; }
+        .badge-antithesis { background: #ff3366; }
+        .badge-center { background: #ffe600; }
+        .badge-t2 { background: #00ff88; }
+
+        /* Тултипы и метки в сцене */
         #nodeTooltip {
             position: absolute; display: none; background: rgba(13, 18, 29, 0.95);
             border: 1px solid #00ffaa; color: #fff; padding: 8px 12px; border-radius: 6px;
@@ -167,207 +367,253 @@
             font-family: monospace; pointer-events: none; transform: translate(-50%, -50%);
             text-shadow: 0 0 4px rgba(0,210,255,0.6);
         }
-        .stats-panel {
-            background: #131b2e; border: 1px solid #1f2d4a; border-radius: 8px; padding: 10px 15px;
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;
+
+        /* Нижняя плавающая панель: компактные метрики + сворачиваемая консоль */
+        #hudBottomStack {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            right: 8px;
+            z-index: 35;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
         }
-        .stat-box { background: #101726; border: 1px solid #1a2845; padding: 8px 12px; border-radius: 6px; }
-        .stat-title { font-size: 0.7rem; color: #88a0c0; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: 0.9rem; color: #00ffaa; font-family: monospace; font-weight: bold; }
-        .console-wrapper { background: #131b2e; border: 1px solid #1f2d4a; border-radius: 8px; overflow: hidden; }
+
+        .console-wrapper {
+            pointer-events: auto;
+            background: rgba(13, 18, 29, 0.92);
+            border: 1px solid #1f2d4a;
+            border-radius: 8px;
+            overflow: hidden;
+            backdrop-filter: blur(6px);
+        }
         .console-header {
             display: flex; justify-content: space-between; align-items: center; background: #131b2e;
-            padding: 6px 12px; font-size: 0.75rem; color: #88a0c0; border-bottom: 1px solid #1f2d4a;
+            padding: 4px 10px; font-size: 0.72rem; color: #88a0c0; border-bottom: 1px solid #1f2d4a;
             flex-wrap: wrap; gap: 6px;
         }
-        
-        .console-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .filter-label { font-size: 0.7rem; color: #88a0c0; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .filter-label input { margin: 0; cursor: pointer; }
-        
-        .console-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .console-filters { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .filter-label { font-size: 0.68rem; color: #88a0c0; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+        .console-actions { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
         .console-action-btn {
-            background: #1f2d4a; border: 1px solid #2a3f6d; color: #00e5ff; padding: 3px 8px;
-            border-radius: 4px; font-size: 0.7rem; cursor: pointer; margin: 0;
+            background: #1f2d4a; border: 1px solid #2a3f6d; color: #00e5ff; padding: 2px 7px;
+            border-radius: 4px; font-size: 0.68rem; cursor: pointer;
         }
         .console-action-btn:hover { background: #00e5ff; color: #0b0f19; }
         .console-panel {
-            background: #0d121d; padding: 10px 12px; font-family: monospace; font-size: 0.75rem;
-            height: 120px; overflow-y: auto; color: #00e5ff; transition: height 0.2s, padding 0.2s;
+            padding: 8px 10px; font-family: monospace; font-size: 0.72rem;
+            height: 92px; overflow-y: auto; color: #00e5ff; transition: height 0.2s, padding 0.2s;
         }
         .console-panel.collapsed { height: 0; padding-top: 0; padding-bottom: 0; border: none; }
         .console-line { margin-bottom: 3px; line-height: 1.3; }
-        
         .console-line.type-sys { color: #88a0c0; }
         .console-line.type-qcore { color: #ffea00; }
         .console-line.type-err { color: #ff4444; }
         .filter-sys .console-line:not(.type-sys) { display: none; }
         .filter-qcore .console-line:not(.type-qcore) { display: none; }
 
-        .legend-badge { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
-        .badge-thesis { background: #00e5ff; }
-        .badge-antithesis { background: #ff3366; }
-        .badge-center { background: #ffe600; }
-        .badge-t2 { background: #00ff88; }
-
-        #openHelpBtn {
-            position: absolute; top: 15px; right: 15px; z-index: 50; background: rgba(16, 23, 38, 0.9);
-            color: #00e5ff; border: 1px solid #00e5ff; width: 36px; height: 36px; border-radius: 50%;
-            font-weight: bold; cursor: pointer; backdrop-filter: blur(4px); display: flex;
-            align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 1rem;
+        .stats-panel {
+            pointer-events: auto;
+            background: rgba(16, 23, 38, 0.88);
+            border: 1px solid #1f2d4a;
+            border-radius: 8px;
+            padding: 5px 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            backdrop-filter: blur(6px);
         }
+        .stat-box { background: rgba(11, 15, 25, 0.75); border: 1px solid #1a2845; padding: 4px 8px; border-radius: 5px; }
+        .stat-title { font-size: 0.6rem; color: #88a0c0; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .stat-value { font-size: 0.78rem; color: #00ffaa; font-family: monospace; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+        /* Модальное окно справки */
         #helpModal {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
             background: rgba(7, 10, 17, 0.9); backdrop-filter: blur(8px); z-index: 9999;
             justify-content: center; align-items: center; padding: 15px;
         }
         #helpModal.active { display: flex; }
         .help-modal-content {
             background: #131b2e; border: 1px solid #00e5ff; border-radius: 12px; width: 100%;
-            max-width: 850px; height: 85vh; display: flex; flex-direction: column;
+            max-width: 650px; max-height: 84vh; display: flex; flex-direction: column;
             box-shadow: 0 10px 40px rgba(0, 229, 255, 0.2); overflow: hidden;
         }
         .help-modal-header {
-            background: #101726; padding: 15px 20px; border-bottom: 1px solid #1f2d4a;
+            background: #101726; padding: 14px 18px; border-bottom: 1px solid #1f2d4a;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .help-modal-header h2 { color: #00e5ff; font-size: 1rem; }
+        .help-modal-header h2 { color: #00e5ff; font-size: 0.95rem; }
         .help-close-btn {
-            background: #ff3366; color: #fff; border: none; padding: 6px 12px;
+            background: #ff3366; color: #fff; border: none; padding: 5px 12px;
             border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem;
         }
         .help-modal-body {
-            padding: 20px; overflow-y: auto; color: #c0d0e0; font-size: 0.85rem; line-height: 1.5; display: flex; flex-direction: column; gap: 15px;
+            padding: 16px 18px; overflow-y: auto; color: #c0d0e0; font-size: 0.82rem; line-height: 1.45; display: flex; flex-direction: column; gap: 12px;
         }
 
-        @media (max-width: 768px) {
-            body { overflow-y: auto; height: auto; }
-            .main-container { flex-direction: column; padding: 6px; gap: 8px; }
-            .sidebar { width: 100%; }
-            .workspace { height: 75vh; min-height: 420px; }
-            header { padding: 8px 12px; }
-            h1 { font-size: 0.95rem; }
-            .subtitle { display: none; }
-            #demoRotateControl {
-                top: 10px;
-                left: 10px;
-                right: 54px;
-                flex-wrap: wrap;
-                padding: 4px 6px;
+        /* Адаптация под узкие экраны телефонов (включая вертикальный формат TikTok 9:16) */
+        @media (max-width: 640px) {
+            #hudTopStack { top: 6px; left: 6px; right: 42px; gap: 4px; }
+            #zenUiToggleBtn { top: 6px; right: 6px; width: 30px; height: 30px; font-size: 0.85rem; }
+            .brand-badge { display: none; }
+            #visToolbar { padding: 3px 4px; gap: 3px; }
+            #visToolbar select,
+            #visToolbar button,
+            #visToolbar .nav-btn {
+                font-size: 0.65rem;
+                padding: 3px 6px;
+                min-height: 25px;
             }
+            #visToolbar select { max-width: 118px; }
+            .brightness-pill, #demoRotateControl { padding: 2px 6px; min-height: 25px; font-size: 0.64rem; }
+            .brightness-pill input[type="range"] { width: 46px; }
+            #demoRotateControl input[type="range"] { width: 44px; }
+            #demoRotateModeSelect { max-width: 74px; font-size: 0.64rem; }
+            .hud-popover {
+                top: 86px;
+                left: 8px;
+                right: 8px;
+                width: auto;
+                max-height: 60vh;
+            }
+            .stats-panel { grid-template-columns: repeat(2, 1fr); padding: 4px 6px; gap: 4px; }
+            .stat-box { padding: 3px 6px; }
+            .stat-title { font-size: 0.55rem; }
+            .stat-value { font-size: 0.7rem; }
+            .console-panel { height: 70px; font-size: 0.66rem; }
         }
     </style>
 </head>
 <body>
+<div id="app">
+    <div class="canvas-container" id="canvasContainer">
+        <canvas id="renderCanvas"></canvas>
 
-    <header>
-        <div>
-            <h1>GIDEON CORE ARCHITECTURE</h1>
-            <div class="subtitle">Топологическая система Сфирали • Матрица Адамара • Весы Адама [-1, 0, +1]</div>
-        </div>
-        <div class="header-actions">
-            <!-- БЕГУНОК ЯРКОСТИ СТЕКЛА МОДЕЛИ -->
-            <div id="visBrightnessControl" class="brightness-pill" title="Яркость свечения стекла модели">
-                <span>☀️ Яркость:</span>
-                <input type="range" id="visBrightnessRange" min="0.2" max="2.5" step="0.05" value="1.2">
-                <span id="visBrightnessVal" style="color:#00ffaa; font-family:monospace; min-width:36px;">120%</span>
-            </div>
-            <!-- КНОПКА ВКЛ/ВЫКЛ АНИМАЦИИ ЛАЗЕРА -->
-            <button id="toggleAnimMasterBtn" class="nav-btn" style="background: #1f2d4a; color: #ff88ff; border: 1px solid #ff00ff;">⚡ Лазер: ВЫКЛ</button>
-            <!-- КНОПКА ВКЛ/ВЫКЛ ИНДИВИДУАЛЬНЫХ КУБИКОВ И СТЕКЛЯННОГО КОРПУСА -->
-            <button id="toggleModularCubesBtn" class="nav-btn" style="background: #2d1f4a; color: #ff88ff; border: 1px solid #ff00ff;">🔮 Сферы: ВЫКЛ</button>
-            <a href="constructor.html" class="nav-btn">📐 Конструктор</a>
-            <div style="font-size: 0.75rem; color: #00ffaa; font-family: monospace;" id="statusHeader">ACTIVE</div>
-        </div>
-    </header>
+        <!-- Кнопка чистого экрана (прячет интерфейс для записи видео) -->
+        <button id="zenUiToggleBtn" title="Скрыть или показать интерфейс (для записи видео)">👁️</button>
 
-    <div class="main-container">
-        <div class="sidebar">
-            <h3 style="font-size: 0.9rem; color: #fff; border-bottom: 1px solid #1f2d4a; padding-bottom: 6px;">Параметры Ядра</h3>
-            
-            <div class="control-group">
-                <label for="modeSelect">Архитектурный Режим</label>
-                <select id="modeSelect">
+        <!-- ЕДИНЫЙ ВЕРХНИЙ СТЕК ИНТЕРФЕЙСА -->
+        <div id="hudTopStack">
+            <!-- Ряд 1: Основные кнопки и переключатели (Параметры слева, чтобы не закрывать модель) -->
+            <div id="visToolbar">
+                <span class="brand-badge">GIDEON</span>
+
+                <!-- Выпадающая панель всех параметров геометрии, оптики и файлов — слева -->
+                <div class="dropdown">
+                    <button id="paramsMenuBtn" title="Параметры Сфирали, стекло, загрузка и экспорт">⚙️ Параметры ▾</button>
+                    <div class="hud-popover" id="paramsPopover">
+                        <div class="popover-section-title">Геометрия и волновая динамика</div>
+                        <div class="grid-2">
+                            <div class="control-group">
+                                <label for="harmAxisSelect">Ось Гармоник</label>
+                                <select id="harmAxisSelect">
+                                    <option value="Harmonic X">Harmonic X</option>
+                                    <option value="Harmonic Y">Harmonic Y</option>
+                                    <option value="Harmonic Z" selected>Harmonic Z</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="coresInput">Кол-во Ядер (N)</label>
+                                <input type="number" id="coresInput" value="1" min="1" max="12">
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="control-group">
+                                <label for="quenchInput">Темп Квенча</label>
+                                <input type="number" id="quenchInput" value="1.0" min="0.1" max="10.0" step="0.1">
+                            </div>
+                            <div class="control-group">
+                                <label for="animSpeedRange">Скорость импульса</label>
+                                <input type="range" id="animSpeedRange" min="0.2" max="3.0" step="0.1" value="1.0">
+                            </div>
+                        </div>
+
+                        <div class="popover-section-title">Оптика и материал волновода</div>
+                        <div class="control-group">
+                            <label for="glassTintSelect">Цвет стекла волновода</label>
+                            <select id="glassTintSelect">
+                                <option value="clear" selected>Прозрачное оптическое стекло</option>
+                                <option value="colored">Цветные витки (RGB-индикация)</option>
+                                <option value="cyan">Голубой кварц (#88ccff)</option>
+                                <option value="emerald">Изумрудное стекло (#00ffaa)</option>
+                                <option value="amber">Янтарное стекло (#ffaa00)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="control-group">
+                                <label for="sidebarBrightnessRange">Яркость (<span id="sidebarBrightnessVal" style="color:#00ffaa;">120%</span>)</label>
+                                <input type="range" id="sidebarBrightnessRange" min="0.2" max="2.5" step="0.05" value="1.2">
+                            </div>
+                            <div class="control-group">
+                                <label for="tubeThicknessRange">Толщина (<span id="tubeThicknessVal" style="color:#00ffaa;">1.0×</span>)</label>
+                                <input type="range" id="tubeThicknessRange" min="0.3" max="3.0" step="0.1" value="1.0">
+                            </div>
+                        </div>
+
+                        <div class="popover-section-title">Модели и экспорт</div>
+                        <button class="popover-btn secondary" id="loadModelBtn">📁 Загрузить свою модель (.json)</button>
+                        <button class="popover-btn secondary" id="resetModelBtn" style="background:#2a1f2d; color:#ff88ff; border-color:#ff00ff; display:none;">🔄 Сбросить к Сфирали</button>
+                        <input type="file" id="modelFileInput" style="display: none;" accept=".json,.txt">
+
+                        <div class="grid-2">
+                            <button class="popover-btn secondary" id="exportJsonBtn">💾 JSON-граф</button>
+                            <button class="popover-btn secondary" id="exportStlBtn" style="color:#00ffaa; border-color:#00ffaa;">🖨️ STL (3D)</button>
+                        </div>
+
+                        <div class="legend-row">
+                            <span><span class="legend-badge badge-thesis"></span>Правый (+)</span>
+                            <span><span class="legend-badge badge-antithesis"></span>Левый (-)</span>
+                            <span><span class="legend-badge badge-center"></span>S-переход</span>
+                            <span><span class="legend-badge badge-t2"></span>Ветвь Т2/А2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Быстрый выбор архитектурного режима -->
+                <select id="modeSelect" title="Архитектурный режим Сфирали">
                     <option value="Single" selected>Сфираль (Базовая)</option>
-                    <option value="Axis X">Диполь с разворотом по оси X (Звезда)</option>
-                    <option value="Axis Y">Диполь с разворотом по оси Y (Кольцо)</option>
-                    <option value="Axis Z">Диполь с разворотом по оси Z (Вихрь)</option>
+                    <option value="Axis X">Диполь X (Звезда)</option>
+                    <option value="Axis Y">Диполь Y (Кольцо)</option>
+                    <option value="Axis Z">Диполь Z (Вихрь)</option>
                 </select>
+
+                <button id="toggleAnimMasterBtn" title="Вкл/выкл бегущие лазерные импульсы">⚡ Лазер: ВЫКЛ</button>
+                <button id="toggleModularCubesBtn" title="Вкл/выкл стеклянный корпус и сферы">🔮 Сферы: ВЫКЛ</button>
+
+                <!-- Выпадающая панель расчётов, ИИ и отчётов -->
+                <div class="dropdown">
+                    <button id="aiLogsMenuBtn" title="Расчёт пакетов, ИИ-агент и HTML-паспорт">🧠 ИИ / Расчёт ▾</button>
+                    <div class="hud-popover" id="aiLogsPopover">
+                        <div class="popover-section-title">Квантово-волновой расчёт</div>
+                        <button class="popover-btn" id="calcBtn">⚡ Выполнить расчёт пакетов</button>
+                        <button class="popover-btn secondary" id="generateReportBtn" style="color:#00ffcc; border-color:#00ffcc;">📥 Скачать HTML-паспорт модели</button>
+
+                        <div class="popover-section-title">ИИ-Напарник (sfiral_server.py)</div>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="text" id="aiQueryInput" placeholder="Спросить ИИ по модели..." style="flex:1; min-width:0; background:#0d121d; border:1px solid #00e5ff; color:#00e5ff; padding:5px 8px; border-radius:5px; font-size:0.74rem; outline:none;" />
+                            <button id="askAiBtn" class="popover-btn" style="width:auto; padding:5px 10px;">🧠</button>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="constructor.html" class="nav-btn constructor-link" title="Перейти в Конструктор Сфиралей">📐 Конструктор</a>
+                <button id="openHelpBtn" title="Справка">?</button>
             </div>
 
-            <div class="control-group">
-                <label for="harmAxisSelect">Ось Гармоник</label>
-                <select id="harmAxisSelect">
-                    <option value="Harmonic X">Harmonic X</option>
-                    <option value="Harmonic Y">Harmonic Y</option>
-                    <option value="Harmonic Z" selected>Harmonic Z (Главная ось)</option>
-                </select>
-            </div>
+            <!-- Ряд 2: Яркость и Демо-автоповороты -->
+            <div id="subControlsRow">
+                <div id="visBrightnessControl" class="brightness-pill" title="Яркость свечения стекла модели">
+                    <span>☀️</span>
+                    <input type="range" id="visBrightnessRange" min="0.2" max="2.5" step="0.05" value="1.2">
+                    <span id="visBrightnessVal" style="color:#00ffaa; font-family:monospace; min-width:34px;">120%</span>
+                </div>
 
-            <div class="control-group">
-                <label for="coresInput">Количество Ядер (N)</label>
-                <input type="number" id="coresInput" value="1" min="1" max="12">
-            </div>
-
-            <div class="control-group">
-                <label for="quenchInput">Темп Квенча (Kibble-Zurek)</label>
-                <input type="number" id="quenchInput" value="1.0" min="0.1" max="10.0" step="0.1">
-            </div>
-
-            <div class="control-group">
-                <label for="animSpeedRange">Множитель скорости анимации</label>
-                <input type="range" id="animSpeedRange" min="0.2" max="3.0" step="0.1" value="1.0">
-            </div>
-
-            <!-- ВЫБОР ЦВЕТА СТЕКЛА ВОЛНОВОДА -->
-            <div class="control-group">
-                <label for="glassTintSelect">Цвет стекла волновода</label>
-                <select id="glassTintSelect">
-                    <option value="clear" selected>Прозрачное оптическое стекло</option>
-                    <option value="colored">Цветные витки (RGB-индикация)</option>
-                    <option value="cyan">Голубой кварц (#88ccff)</option>
-                    <option value="emerald">Изумрудное стекло (#00ffaa)</option>
-                    <option value="amber">Янтарное стекло (#ffaa00)</option>
-                </select>
-            </div>
-
-            <!-- БЕГУНОК ЯРКОСТИ СВЕЧЕНИЯ СТЕКЛА -->
-            <div class="control-group">
-                <label for="sidebarBrightnessRange">Яркость свечения стекла (<span id="sidebarBrightnessVal" style="color:#00ffaa;">120%</span>)</label>
-                <input type="range" id="sidebarBrightnessRange" min="0.2" max="2.5" step="0.05" value="1.2">
-            </div>
-
-            <!-- БЕГУНОК ТОЛЩИНЫ ТРУБОК СФИРАЛИ -->
-            <div class="control-group">
-                <label for="tubeThicknessRange">Толщина волновода (<span id="tubeThicknessVal" style="color:#00ffaa;">1.0×</span>)</label>
-                <input type="range" id="tubeThicknessRange" min="0.3" max="3.0" step="0.1" value="1.0">
-            </div>
-
-            <div class="control-group" style="margin-top: 5px; border-top: 1px solid #1f2d4a; padding-top: 10px;">
-                <button class="btn-secondary" id="exportJsonBtn">💾 Сохранить JSON-граф</button>
-                <button class="btn-secondary" id="exportStlBtn" style="color:#00ffaa; border-color:#00ffaa;">🖨️ Экспорт в STL (3D-печать)</button>
-            </div>
-
-            <button id="calcBtn" style="margin-top: 10px;">Выполнить расчёт пакетов</button>
-            <button class="btn-secondary" id="loadModelBtn">📁 Загрузить свою модель (.json)</button>
-            <button class="btn-secondary" id="resetModelBtn" style="background:#2a1f2d; color:#ff88ff; border-color:#ff00ff; display:none;">🔄 Сбросить к Сфирали</button>
-            <input type="file" id="modelFileInput" style="display: none;" accept=".json,.txt">
-
-            <div style="margin-top: 5px; font-size: 0.75rem; color: #88a0c0; line-height: 1.3; border-top: 1px solid #1f2d4a; padding-top: 8px;">
-                <p style="color: #00e5ff; font-weight: bold; margin-bottom: 3px;">Легенда элементов:</p>
-                <p><span class="legend-badge badge-thesis"></span>Правый виток (+)</p>
-                <p><span class="legend-badge badge-antithesis"></span>Левый виток (-)</p>
-                <p><span class="legend-badge badge-center"></span>S-переход («0» центр)</p>
-                <p><span class="legend-badge badge-t2"></span>Ветвь Т2 / А2</p>
-            </div>
-        </div>
-
-        <div class="workspace">
-            <div class="canvas-container" id="canvasContainer">
-                <canvas id="renderCanvas"></canvas>
-
-                <!-- ПАНЕЛЬ ДЕМОНСТРАЦИОННОГО АВТО-ВРАЩЕНИЯ -->
                 <div id="demoRotateControl" title="Автоматический облёт камеры или вращение модели для записи видео">
                     <button id="demoRotateToggleBtn" type="button">🎬 Демо: ВЫКЛ</button>
                     <select id="demoRotateModeSelect" title="Траектория вращения">
@@ -380,348 +626,247 @@
                     <input type="range" id="demoRotateSpeedRange" min="0.2" max="3.0" step="0.1" value="1.0" title="Скорость автоповорота">
                     <span id="demoRotateSpeedVal">1.0×</span>
                 </div>
-                
-                <div id="nodeTooltip">
-                    <div class="tooltip-row">Узел: <span class="tooltip-val" id="ttNodeId">N/A</span></div>
-                    <div class="tooltip-row">Состояние: <span class="tooltip-val" id="ttGate">N/A</span></div>
-                    <hr style="border: 0; border-top: 1px solid #1f2d4a; margin: 4px 0;">
-                    <div class="tooltip-row" style="color:#ff4444">L(-1): <span id="ttProbL">0.00</span></div>
-                    <div class="tooltip-row" style="color:#ffe600">S(0): <span id="ttProbS">0.00</span></div>
-                    <div class="tooltip-row" style="color:#00a0ff">R(+1): <span id="ttProbR">0.00</span></div>
-                </div>
-
-                <button id="openHelpBtn" title="Справка">?</button>
-
-                <!-- СПРАВОЧНИК ВИЗУАЛИЗАТОРА -->
-                <div id="helpModal">
-                    <div class="help-modal-content">
-                        <div class="help-modal-header">
-                            <h2>📚 Руководство пользователя: Визуализатор GIDEON</h2>
-                            <button class="help-close-btn" id="closeHelpBtn">✕</button>
-                        </div>
-                        <div class="help-modal-body" style="font-size:0.85rem; line-height:1.4;">
-                            
-                            <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(255,0,255,0.05); border-left: 2px solid #ff00ff; border-radius: 4px;">
-                                <h3 style="color: #ff88ff; margin-bottom: 6px; font-size: 0.95rem;">⚡ Управление в шапке (Хедер)</h3>
-                                <p>
-                                    • <b>Яркость:</b> Плавная регулировка свечения и прозрачности стекла волновода.<br>
-                                    • <b>Лазер (ВКЛ / ВЫКЛ):</b> Включает или отключает визуализацию бегущих световых импульсов внутри прозрачного волновода.<br>
-                                    • <b>Сферы (ВКЛ / ВЫКЛ):</b> Управляет отображением внешнего стеклянного корпуса чипа, коннекторов и модульных оболочек.<br>
-                                    • <b>Конструктор:</b> Быстрый переход в интерактивный редактор для создания и сборки пользовательских моделей Сфирали.
-                                </p>
-                            </div>
-
-                            <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(0,229,255,0.05); border-left: 2px solid #00e5ff; border-radius: 4px;">
-                                <h3 style="color: #00e5ff; margin-bottom: 6px; font-size: 0.95rem;">👁️ Навигация и Демо-автоповороты</h3>
-                                <p>
-                                    • <b>Демо (ВКЛ / ВЫКЛ):</b> Плавное автоматическое вращение камеры (<i>Орбита, Волна, Сфираль, Гироскоп</i>) или самой модели вокруг своей оси.<br>
-                                    • <b>Вращение камеры:</b> Зажмите Левую кнопку мыши (ЛКМ) / Один палец на экране.<br>
-                                    • <b>Смещение (Пан):</b> Зажмите Правую кнопку мыши (ПКМ) / Два пальца на экране.<br>
-                                    • <b>Масштаб (Зум):</b> Колесико мыши / Жест «щипок».
-                                </p>
-                            </div>
-
-                            <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(0,255,170,0.05); border-left: 2px solid #00ffaa; border-radius: 4px;">
-                                <h3 style="color: #00ffaa; margin-bottom: 6px; font-size: 0.95rem;">⚙️ Настройка топологии и оптики (Левая панель)</h3>
-                                <p>
-                                    • <b>Цвет стекла волновода:</b> Переключение между прозрачным оптическим стеклом, цветной RGB-индикацией витков, голубым кварцем, изумрудным и янтарным стеклом.<br>
-                                    • <b>Толщина волновода:</b> Регулировка диаметра стеклянных трубок Сфирали.<br>
-                                    • <b>Архитектурный Режим:</b> Переключение между базовой сфиралью и дипольными сборками (Звезда, Кольцо, Вихрь).<br>
-                                    • <b>Количество Ядер (N):</b> Увеличение числа итераций сфирали (масштабирование до 12 циклов).
-                                </p>
-                            </div>
-
-                            <div class="help-section" style="margin-bottom: 12px; padding: 10px; background: rgba(255,170,0,0.05); border-left: 2px solid #ffaa00; border-radius: 4px;">
-                                <h3 style="color: #ffaa00; margin-bottom: 6px; font-size: 0.95rem;">📊 Аналитика и Экспорт</h3>
-                                <p>
-                                    • <b>Весы Адама:</b> Показывает топологический дисбаланс системы (идеал стремится к 0.0000).<br>
-                                    • <b>Хиральность:</b> Должна оставаться нулевой, обеспечивая комплементарность левого и правого витков.<br>
-                                    • <b>Импорт (.json):</b> Загрузка пользовательского графа, собранного в Конструкторе.<br>
-                                    • <b>Экспорт (STL):</b> Подготовка сгенерированной геометрии для физической 3D-печати.
-                                </p>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
-                <div id="labelRight" class="scene-label" style="display:none;">Правый виток (+)</div>
-                <div id="labelLeft" class="scene-label" style="display:none;">Левый виток (-)</div>
-                <div id="labelCenter" class="scene-label" style="display:none;">S-образный переход («0»)</div>
-
-                <div id="axisPosX" class="axis-label">+X</div>
-                <div id="axisNegX" class="axis-label">-X</div>
-                <div id="axisPosY" class="axis-label">+Y</div>
-                <div id="axisNegY" class="axis-label">-Y</div>
-                <div id="axisPosZ" class="axis-label">+Z (S-верх)</div>
-                <div id="axisNegZ" class="axis-label">-Z (S-низ)</div>
             </div>
+        </div>
 
-            <div class="stats-panel">
-                <div class="stat-box">
-                    <div class="stat-title">Весы Адама (Дисбаланс)</div>
-                    <div class="stat-value" id="statDefects">0.0000</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-title">Хиральность системы</div>
-                    <div class="stat-value" id="statChirality">0.0 (Нулевая)</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-title">Угловой шаг (Δϕ)</div>
-                    <div class="stat-value" id="statAngle">360.0°</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-title">Адамар-суперпозиция</div>
-                    <div class="stat-value" id="statHadamard">ОРТОГОНАЛЬНО</div>
-                </div>
-            </div>
+        <!-- Тултипы и 3D-метки -->
+        <div id="nodeTooltip">
+            <div class="tooltip-row">Узел: <span class="tooltip-val" id="ttNodeId">N/A</span></div>
+            <div class="tooltip-row">Состояние: <span class="tooltip-val" id="ttGate">N/A</span></div>
+            <hr style="border: 0; border-top: 1px solid #1f2d4a; margin: 4px 0;">
+            <div class="tooltip-row" style="color:#ff4444">L(-1): <span id="ttProbL">0.00</span></div>
+            <div class="tooltip-row" style="color:#ffe600">S(0): <span id="ttProbS">0.00</span></div>
+            <div class="tooltip-row" style="color:#00a0ff">R(+1): <span id="ttProbR">0.00</span></div>
+        </div>
 
-            <!-- КОНСОЛЬ С ВСТРОЕННЫМ ВВОДОМ ИИ И ОТЧЕТОМ В ШАПКЕ -->
+        <div id="labelRight" class="scene-label" style="display:none;">Правый виток (+)</div>
+        <div id="labelLeft" class="scene-label" style="display:none;">Левый виток (-)</div>
+        <div id="labelCenter" class="scene-label" style="display:none;">S-образный переход («0»)</div>
+
+        <div id="axisPosX" class="axis-label">+X</div>
+        <div id="axisNegX" class="axis-label">-X</div>
+        <div id="axisPosY" class="axis-label">+Y</div>
+        <div id="axisNegY" class="axis-label">-Y</div>
+        <div id="axisPosZ" class="axis-label">+Z (S-верх)</div>
+        <div id="axisNegZ" class="axis-label">-Z (S-низ)</div>
+
+        <!-- НИЖНИЙ ПЛАВАЮЩИЙ СТЕК: сворачиваемая консоль + компактная панель метрик -->
+        <div id="hudBottomStack">
             <div class="console-wrapper">
                 <div class="console-header">
                     <div class="console-filters">
-                        <span style="margin-right: 6px;">Логи:</span>
+                        <span>Логи:</span>
                         <label class="filter-label"><input type="radio" name="logFilter" value="all" checked> Все</label>
                         <label class="filter-label"><input type="radio" name="logFilter" value="sys"> [SYS]</label>
                         <label class="filter-label"><input type="radio" name="logFilter" value="qcore"> [Q-CORE]</label>
                     </div>
-
-                    <!-- ПОЛЕ ВВОДА ИИ И КНОПКА ОТЧЕТА ПРЯМО НАД ЛОГАМИ -->
-                    <div style="display: flex; gap: 6px; align-items: center;">
-                        <button id="generateReportBtn" class="console-action-btn" style="background:#2c3e50; color:#00ffcc; border-color:#00ffcc;" title="Скачать HTML-паспорт модели">📥 Отчет</button>
-                        <input type="text" id="aiQueryInput" placeholder="Спросить ИИ-агента..." style="background: #0d121d; border: 1px solid #00e5ff; color: #00e5ff; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; width: 150px; outline: none;" />
-                        <button id="askAiBtn" class="console-action-btn" style="background: #00e5ff; color: #0b0f19; font-weight: bold;" title="Спросить">🧠</button>
-                    </div>
-
                     <div class="console-actions">
-                        <button class="console-action-btn" id="toggleConsoleBtn">Свернуть 🔼</button>
+                        <button class="console-action-btn" id="toggleConsoleBtn">Развернуть 🔽</button>
                         <button class="console-action-btn" id="clearLogBtn">Очистить</button>
                         <button class="console-action-btn" id="resultOnlyBtn">Результат</button>
                     </div>
                 </div>
-                <div class="console-panel" id="consoleLog">
-                    <div class="console-line type-sys">[SYS] Ядро GIDEON инициализировано. Загрузите модель для ручного инспектора.</div>
+                <div class="console-panel collapsed" id="consoleLog">
+                    <div class="console-line type-sys">[SYS] Ядро GIDEON инициализировано. Нажмите «⚙️ Параметры» для настройки модели.</div>
+                </div>
+            </div>
+
+            <div class="stats-panel">
+                <div class="stat-box">
+                    <div class="stat-title">Весы Адама</div>
+                    <div class="stat-value" id="statDefects">0.0000</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">Хиральность</div>
+                    <div class="stat-value" id="statChirality">0.0 (Нулевая)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">Угловой шаг</div>
+                    <div class="stat-value" id="statAngle">360.0°</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">Суперпозиция</div>
+                    <div class="stat-value" id="statHadamard">ОРТОГОНАЛЬНО</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- СПРАВОЧНИК ВИЗУАЛИЗАТОРА -->
+        <div id="helpModal">
+            <div class="help-modal-content">
+                <div class="help-modal-header">
+                    <h2>📚 Руководство пользователя: Визуализатор GIDEON</h2>
+                    <button class="help-close-btn" id="closeHelpBtn">✕</button>
+                </div>
+                <div class="help-modal-body">
+                    <div class="help-section" style="padding: 10px; background: rgba(255,0,255,0.05); border-left: 2px solid #ff00ff; border-radius: 4px;">
+                        <h3 style="color: #ff88ff; margin-bottom: 4px; font-size: 0.9rem;">⚡ Верхняя панель и чистый экран</h3>
+                        <p>
+                            • <b>⚙️ Параметры:</b> настройка числа ядер (N), цвета и толщины стекла, загрузка своих JSON-моделей и экспорт STL.<br>
+                            • <b>Режим Сфирали:</b> мгновенно переключает базовую Сфираль и дипольные сборки (Звезда, Кольцо, Вихрь) прямо на живой сцене.<br>
+                            • <b>Лазер / Сферы:</b> включает световые импульсы внутри волновода и стеклянный корпус чипа.<br>
+                            • <b>👁️ (правый верхний угол):</b> скрывает весь интерфейс для чистой записи видео в TikTok.
+                        </p>
+                    </div>
+
+                    <div class="help-section" style="padding: 10px; background: rgba(0,229,255,0.05); border-left: 2px solid #00e5ff; border-radius: 4px;">
+                        <h3 style="color: #00e5ff; margin-bottom: 4px; font-size: 0.9rem;">👁️ Навигация и Демо-автоповороты</h3>
+                        <p>
+                            • <b>Демо (ВКЛ / ВЫКЛ):</b> плавный автоматический облёт камеры (<i>Орбита, Волна, Сфираль, Гироскоп</i>) или вращение самой модели.<br>
+                            • <b>Камера:</b> 1 палец / ЛКМ — вращение, 2 пальца / ПКМ — смещение, щипок / колёсико — зум.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        document.getElementById('openHelpBtn').addEventListener('click', () => {
-            document.getElementById('helpModal').classList.add('active');
-        });
-        document.getElementById('closeHelpBtn').addEventListener('click', () => {
+<script>
+    const paramsBtn = document.getElementById('paramsMenuBtn');
+    const paramsPop = document.getElementById('paramsPopover');
+    const aiLogsBtn = document.getElementById('aiLogsMenuBtn');
+    const aiLogsPop = document.getElementById('aiLogsPopover');
+
+    paramsBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        aiLogsPop?.classList.remove('show');
+        paramsPop?.classList.toggle('show');
+    });
+    aiLogsBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        paramsPop?.classList.remove('show');
+        aiLogsPop?.classList.toggle('show');
+    });
+    paramsPop?.addEventListener('click', (e) => e.stopPropagation());
+    aiLogsPop?.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => {
+        paramsPop?.classList.remove('show');
+        aiLogsPop?.classList.remove('show');
+    });
+
+    const zenBtn = document.getElementById('zenUiToggleBtn');
+    const topHud = document.getElementById('hudTopStack');
+    const botHud = document.getElementById('hudBottomStack');
+    zenBtn?.addEventListener('click', () => {
+        const hidden = topHud.classList.toggle('ui-hidden');
+        botHud?.classList.toggle('ui-hidden', hidden);
+        zenBtn.textContent = hidden ? '👁️‍🗨️' : '👁️';
+        zenBtn.classList.toggle('active', hidden);
+    });
+
+    document.getElementById('openHelpBtn')?.addEventListener('click', () => {
+        document.getElementById('helpModal')?.classList.add('active');
+    });
+    document.getElementById('closeHelpBtn')?.addEventListener('click', () => {
+        document.getElementById('helpModal')?.classList.remove('active');
+    });
+    document.getElementById('helpModal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('helpModal')) {
             document.getElementById('helpModal').classList.remove('active');
+        }
+    });
+
+    const logPanel = document.getElementById('consoleLog');
+    document.querySelectorAll('input[name="logFilter"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            logPanel.className = 'console-panel';
+            if (e.target.value === 'sys') logPanel.classList.add('filter-sys');
+            if (e.target.value === 'qcore') logPanel.classList.add('filter-qcore');
         });
-        document.getElementById('helpModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('helpModal')) {
-                document.getElementById('helpModal').classList.remove('active');
-            }
-        });
+    });
 
-        const logPanel = document.getElementById('consoleLog');
-        document.querySelectorAll('input[name="logFilter"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                logPanel.className = 'console-panel';
-                if(e.target.value === 'sys') logPanel.classList.add('filter-sys');
-                if(e.target.value === 'qcore') logPanel.classList.add('filter-qcore');
-            });
-        });
+    document.getElementById('calcBtn')?.addEventListener('click', () => {
+        aiLogsPop?.classList.remove('show');
+        logPanel?.classList.remove('collapsed');
+        const nodes = (window.customModelSource && window.customModelSource.nodes) ? window.customModelSource.nodes : [];
+        const edges = (window.customModelSource && window.customModelSource.edges) ? window.customModelSource.edges : [];
+        if (typeof computeQuantumState === 'function') {
+            computeQuantumState(nodes, edges);
+        } else if (logPanel) {
+            logPanel.innerHTML += `<div class="console-line type-err">❌ Ошибка: функция computeQuantumState не загружена из app.js</div>`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+    });
 
-        // Привязка кнопки расчета пакетов к волновому CA-движку бэкенда
-        document.getElementById('calcBtn')?.addEventListener('click', () => {
-            const nodes = (window.customModelSource && window.customModelSource.nodes) ? window.customModelSource.nodes : [];
-            const edges = (window.customModelSource && window.customModelSource.edges) ? window.customModelSource.edges : [];
-            
-            if (typeof computeQuantumState === 'function') {
-                computeQuantumState(nodes, edges);
-            } else {
-                let logEl = document.getElementById('consoleLog');
-                if (logEl) {
-                    logEl.innerHTML += `<div class="console-line type-err">❌ Ошибка: функция computeQuantumState не загружена из app.js</div>`;
-                    logEl.scrollTop = logEl.scrollHeight;
-                }
-            }
-        });
+    async function generateModelPassportReport() {
+        aiLogsPop?.classList.remove('show');
+        logPanel?.classList.remove('collapsed');
+        const nodes = (window.customModelSource && window.customModelSource.nodes) ? window.customModelSource.nodes : [];
+        const edges = (window.customModelSource && window.customModelSource.edges) ? window.customModelSource.edges : [];
+        const nodeCount = nodes.length > 0 ? nodes.length : 1008;
 
-        // Генерация подробного академического паспорта модели через бэкенд
-        async function generateModelPassportReport() {
-            const nodes = (window.customModelSource && window.customModelSource.nodes) ? window.customModelSource.nodes : [];
-            const edges = (window.customModelSource && window.customModelSource.edges) ? window.customModelSource.edges : [];
-            const nodeCount = nodes.length > 0 ? nodes.length : 1008;
-
-            let logEl = document.getElementById('consoleLog');
-            if (logEl) {
-                logEl.innerHTML += `<div class="console-line type-sys">📄 [Паспорт]: Запрос генерации подробного академического отчета у сервера...</div>`;
-                logEl.scrollTop = logEl.scrollHeight;
-            }
-
-            try {
-                const response = await fetch('http://localhost:8000/api/generate_academic_passport', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nodes: nodes, edges: edges })
-                });
-                const data = await response.json();
-                
-                if (data.status === 'success' && data.html_content) {
-                    const blob = new Blob([data.html_content], { type: 'text/html;charset=utf-8' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `Sfiral_Visualizer_Academic_Passport_${nodeCount}_nodes.html`;
-                    link.click();
-                    link.remove();
-                    
-                    if (logEl) {
-                        logEl.innerHTML += `<div class="console-line type-qcore">📄 [Паспорт]: Академический отчет успешно сгенерирован и скачан!</div>`;
-                        logEl.scrollTop = logEl.scrollHeight;
-                    }
-                } else {
-                    alert('⚠️ Ошибка сервера при формировании академического паспорта.');
-                }
-            } catch (err) {
-                console.error("Ошибка при запросе паспорта:", err);
-                alert('❌ Не удалось связаться с сервером. Убедитесь, что python-сервер запущен на порту 8000.');
-            }
+        if (logPanel) {
+            logPanel.innerHTML += `<div class="console-line type-sys">📄 [Паспорт]: Запрос генерации подробного отчета у сервера...</div>`;
+            logPanel.scrollTop = logPanel.scrollHeight;
         }
 
-        // Интеграция ИИ для визуализатора с выводом в лог
-        window.askAI = async function(question) {
-            let logEl = document.getElementById('consoleLog');
-            if (logEl) {
-                logEl.style.display = 'block';
-                logEl.classList.remove('collapsed');
-                logEl.innerHTML += `<div class="console-line type-sys" style="color:#ffaa00; margin-top:4px;">🧠 [ИИ думает...]: ${question}</div>`;
-                logEl.scrollTop = logEl.scrollHeight;
-            }
-            try {
-                const response = await fetch('http://localhost:8000/api/ask_ai', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ graph: window.currentGraphModel || { nodes: [], edges: [] }, question: question })
-                });
-                const data = await response.json();
-                if (logEl) {
-                    logEl.innerHTML += `<div class="console-line type-qcore" style="color:#00ffaa; margin-top:4px;">🤖 [ИИ]: ${data.answer}</div>`;
-                    logEl.scrollTop = logEl.scrollHeight;
+        try {
+            const response = await fetch('http://localhost:8000/api/generate_academic_passport', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nodes: nodes, edges: edges })
+            });
+            const data = await response.json();
+            if (data.status === 'success' && data.html_content) {
+                const blob = new Blob([data.html_content], { type: 'text/html;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Sfiral_Visualizer_Academic_Passport_${nodeCount}_nodes.html`;
+                link.click();
+                link.remove();
+                if (logPanel) {
+                    logPanel.innerHTML += `<div class="console-line type-qcore">📄 [Паспорт]: Отчет успешно сгенерирован и скачан!</div>`;
+                    logPanel.scrollTop = logPanel.scrollHeight;
                 }
-            } catch (err) {
-                if (logEl) {
-                    logEl.innerHTML += `<div class="console-line type-err" style="color:#ff4444; margin-top:4px;">❌ [Ошибка ИИ]: Бэкенд не отвечает.</div>`;
-                    logEl.scrollTop = logEl.scrollHeight;
-                }
+            } else {
+                alert('⚠️ Ошибка сервера при формировании паспорта.');
             }
-        };
+        } catch (err) {
+            alert('❌ Не удалось связаться с сервером. Запустите sfiral_server.py на порту 8000.');
+        }
+    }
 
-        document.getElementById('generateReportBtn')?.addEventListener('click', generateModelPassportReport);
-        document.getElementById('askAiBtn')?.addEventListener('click', () => {
+    window.askAI = async function(question) {
+        aiLogsPop?.classList.remove('show');
+        if (logPanel) {
+            logPanel.style.display = 'block';
+            logPanel.classList.remove('collapsed');
+            logPanel.innerHTML += `<div class="console-line type-sys" style="color:#ffaa00; margin-top:4px;">🧠 [ИИ думает...]: ${question}</div>`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+        try {
+            const response = await fetch('http://localhost:8000/api/ask_ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ graph: window.currentGraphModel || { nodes: [], edges: [] }, question: question })
+            });
+            const data = await response.json();
+            if (logPanel) {
+                logPanel.innerHTML += `<div class="console-line type-qcore" style="color:#00ffaa; margin-top:4px;">🤖 [ИИ]: ${data.answer}</div>`;
+                logPanel.scrollTop = logPanel.scrollHeight;
+            }
+        } catch (err) {
+            if (logPanel) {
+                logPanel.innerHTML += `<div class="console-line type-err" style="color:#ff4444; margin-top:4px;">❌ [Ошибка ИИ]: Бэкенд не отвечает.</div>`;
+                logPanel.scrollTop = logPanel.scrollHeight;
+            }
+        }
+    };
+
+    document.getElementById('generateReportBtn')?.addEventListener('click', generateModelPassportReport);
+    document.getElementById('askAiBtn')?.addEventListener('click', () => {
+        const inp = document.getElementById('aiQueryInput');
+        if (inp && inp.value.trim()) { window.askAI(inp.value.trim()); inp.value = ''; }
+    });
+    document.getElementById('aiQueryInput')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
             const inp = document.getElementById('aiQueryInput');
             if (inp && inp.value.trim()) { window.askAI(inp.value.trim()); inp.value = ''; }
-        });
-        document.getElementById('aiQueryInput')?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const inp = document.getElementById('aiQueryInput');
-                if (inp && inp.value.trim()) { window.askAI(inp.value.trim()); inp.value = ''; }
-            }
-        });
-    </script>
+        }
+    });
+</script>
 
-    <!-- АВТОНОМНЫЙ КОНТРОЛЛЕР ДЕМО-АВТОПОВОРОТОВ ДЛЯ ВИЗУАЛИЗАТОРА -->
-    <script>
-        (function initVisualizerDemoRotate() {
-            const wrap = document.getElementById('demoRotateControl');
-            const toggleBtn = document.getElementById('demoRotateToggleBtn');
-            const modeSelect = document.getElementById('demoRotateModeSelect');
-            const speedRange = document.getElementById('demoRotateSpeedRange');
-            const speedVal = document.getElementById('demoRotateSpeedVal');
-            if (!toggleBtn) return;
-
-            let active = false;
-            let mode = 'orbit';
-            let speed = 1.0;
-            let elapsed = 0;
-            let lastTime = performance.now();
-
-            toggleBtn.addEventListener('click', () => {
-                active = !active;
-                lastTime = performance.now();
-                if (active) {
-                    toggleBtn.classList.add('active');
-                    toggleBtn.textContent = '🎬 Демо: ВКЛ';
-                } else {
-                    toggleBtn.classList.remove('active');
-                    toggleBtn.textContent = '🎬 Демо: ВЫКЛ';
-                }
-            });
-
-            modeSelect?.addEventListener('change', (e) => {
-                mode = e.target.value || 'orbit';
-            });
-
-            speedRange?.addEventListener('input', (e) => {
-                speed = parseFloat(e.target.value) || 1.0;
-                if (speedVal) speedVal.textContent = `${speed.toFixed(1)}×`;
-            });
-
-            wrap?.addEventListener('pointerdown', (e) => e.stopPropagation());
-            wrap?.addEventListener('mousedown', (e) => e.stopPropagation());
-
-            function tick(now) {
-                requestAnimationFrame(tick);
-                const dt = Math.min((now - lastTime) / 1000, 0.1);
-                lastTime = now;
-                if (!active) return;
-
-                elapsed += dt * speed;
-                const cam = window.camera || window.__visCamera;
-                const ctrls = window.controls || window.__visControls;
-                const rootGroup = window.sfiralGroup || window.modelGroup || window.__visModelGroup;
-
-                if (mode === 'spin_model' && rootGroup) {
-                    rootGroup.rotation.y += 0.65 * dt * speed;
-                    return;
-                }
-
-                if (cam) {
-                    const target = ctrls?.target || { x: 0, y: 0, z: 0 };
-                    const ox = cam.position.x - target.x;
-                    const oy = cam.position.y - target.y;
-                    const oz = cam.position.z - target.z;
-                    let r = Math.max(Math.sqrt(ox * ox + oy * oy + oz * oz), 1);
-
-                    let theta = Math.atan2(ox, oz);
-                    let phi = Math.acos(Math.max(-0.999, Math.min(0.999, oy / r)));
-
-                    if (mode === 'orbit') {
-                        theta += 0.55 * dt * speed;
-                        phi += (Math.PI * 0.38 - phi) * 0.04;
-                    } else if (mode === 'wave') {
-                        theta += 0.5 * dt * speed;
-                        phi = Math.PI * 0.42 + Math.sin(elapsed * 0.9) * 0.28;
-                    } else if (mode === 'sfiral') {
-                        theta += 0.45 * dt * speed;
-                        phi = Math.PI * 0.45 + Math.sin(elapsed * 1.1) * 0.35;
-                        r *= (1.0 + Math.sin(elapsed * 0.7) * 0.0025);
-                    } else if (mode === 'gyro') {
-                        theta += 0.42 * dt * speed;
-                        phi = Math.PI * 0.5 + Math.sin(elapsed * 0.65) * 0.42;
-                    }
-
-                    phi = Math.max(0.12, Math.min(Math.PI - 0.12, phi));
-                    cam.position.set(
-                        target.x + r * Math.sin(phi) * Math.sin(theta),
-                        target.y + r * Math.cos(phi),
-                        target.z + r * Math.sin(phi) * Math.cos(theta)
-                    );
-                    cam.lookAt(target.x, target.y, target.z);
-                    if (ctrls && typeof ctrls.update === 'function') ctrls.update();
-                }
-            }
-
-            requestAnimationFrame(tick);
-        })();
-    </script>
-
-    <script type="module" src="./visualizer/app.js"></script>
+<script type="module" src="./visualizer/app.js"></script>
 </body>
 </html>
